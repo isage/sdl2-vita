@@ -1,6 +1,6 @@
 diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
 new file mode 100644
-index 000000000..c9ca1ca88
+index 000000000..2b12b25d1
 --- /dev/null
 +++ b/Makefile.vita.dolce
 @@ -0,0 +1,59 @@
@@ -24,7 +24,7 @@ index 000000000..c9ca1ca88
 +	src/loadso/dummy/*.c \
 +	src/power/*.c \
 +	src/power/vita/*.c \
-+	src/filesystem/dummy/*.c \
++	src/filesystem/vita/*.c \
 +	src/render/*.c \
 +	src/render/software/*.c \
 +	src/render/opengles2/SDL_render_gles2.c \
@@ -78,10 +78,10 @@ index 3937dbc38..66ca07312 100644
  #include "SDL_config_minimal.h"
 diff --git a/include/SDL_config_vita.h b/include/SDL_config_vita.h
 new file mode 100644
-index 000000000..d03aae3e1
+index 000000000..05cba8f73
 --- /dev/null
 +++ b/include/SDL_config_vita.h
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,156 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
@@ -220,14 +220,12 @@ index 000000000..d03aae3e1
 +#define SDL_TIMERS_VITA 1
 +#define SDL_POWER_VITA 1
 +#define SDL_VIDEO_DRIVER_VITA  1
++#define SDL_FILESYSTEM_VITA   1
 +
 +
 +#define SDL_VIDEO_RENDER_OGL_ES2 1
 +#define SDL_VIDEO_OPENGL_ES2 1
 +
-+
-+/* !!! FIXME: what does VITA do for filesystem stuff? */
-+#define SDL_FILESYSTEM_DUMMY   1
 +
 +/* VITA doesn't have haptic device (src/haptic/dummy/\*.c) */
 +#define SDL_HAPTIC_DISABLED    1
@@ -583,6 +581,107 @@ index 764e5d978..25b1fbce7 100644
  #endif
  
  /* everyone else. This is where we turn on the API if nothing forced it off. */
+diff --git a/src/filesystem/vita/SDL_sysfilesystem.c b/src/filesystem/vita/SDL_sysfilesystem.c
+new file mode 100644
+index 000000000..ba7732e57
+--- /dev/null
++++ b/src/filesystem/vita/SDL_sysfilesystem.c
+@@ -0,0 +1,95 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#ifdef SDL_FILESYSTEM_VITA
++
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++/* System dependent filesystem routines                                */
++
++#include <errno.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <psp2/kernel/iofilemgr.h>
++#include <sys/types.h>
++#include <limits.h>
++#include <fcntl.h>
++
++#include "SDL_error.h"
++#include "SDL_stdinc.h"
++#include "SDL_filesystem.h"
++#include "SDL_rwops.h"
++
++char *
++SDL_GetBasePath(void)
++{
++    const char *basepath = "app:/";
++    char *retval = SDL_strdup(basepath);
++    return retval;
++}
++
++char *
++SDL_GetPrefPath(const char *org, const char *app)
++{
++    const char *envr = "ux0:/data/";
++    char *retval = NULL;
++    char *ptr = NULL;
++    size_t len = 0;
++
++    if (!app) {
++        SDL_InvalidParamError("app");
++        return NULL;
++    }
++    if (!org) {
++        org = "";
++    }
++
++    len = SDL_strlen(envr);
++
++    len += SDL_strlen(org) + SDL_strlen(app) + 3;
++    retval = (char *) SDL_malloc(len);
++    if (!retval) {
++        SDL_OutOfMemory();
++        return NULL;
++    }
++
++    if (*org) {
++        SDL_snprintf(retval, len, "%s%s/%s/", envr, org, app);
++    } else {
++        SDL_snprintf(retval, len, "%s%s/", envr, app);
++    }
++
++    for (ptr = retval+1; *ptr; ptr++) {
++        if (*ptr == '/') {
++            *ptr = '\0';
++            sceIoMkdir(retval, 0777);
++            *ptr = '/';
++        }
++    }
++    sceIoMkdir(retval, 0777);
++
++    return retval;
++}
++
++#endif /* SDL_FILESYSTEM_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/joystick/SDL_gamecontrollerdb.h b/src/joystick/SDL_gamecontrollerdb.h
 index 45379dabd..bb42c79a7 100644
 --- a/src/joystick/SDL_gamecontrollerdb.h
@@ -597,12 +696,38 @@ index 45379dabd..bb42c79a7 100644
  #endif
      "hidapi,*,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,guide:b5,leftshoulder:b9,leftstick:b7,lefttrigger:a4,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a5,rightx:a2,righty:a3,start:b6,x:b2,y:b3,",
      NULL
+diff --git a/src/joystick/SDL_joystick.c b/src/joystick/SDL_joystick.c
+index 95aac9c6f..f99890337 100644
+--- a/src/joystick/SDL_joystick.c
++++ b/src/joystick/SDL_joystick.c
+@@ -74,6 +74,9 @@ static SDL_JoystickDriver *SDL_joystick_drivers[] = {
+ #ifdef SDL_JOYSTICK_HIDAPI
+     &SDL_HIDAPI_JoystickDriver,
+ #endif
++#ifdef SDL_JOYSTICK_VITA
++    &SDL_VITA_JoystickDriver
++#endif
+ #if defined(SDL_JOYSTICK_DUMMY) || defined(SDL_JOYSTICK_DISABLED)
+     &SDL_DUMMY_JoystickDriver
+ #endif
+diff --git a/src/joystick/SDL_sysjoystick.h b/src/joystick/SDL_sysjoystick.h
+index 6eb8bf47e..b35d243d7 100644
+--- a/src/joystick/SDL_sysjoystick.h
++++ b/src/joystick/SDL_sysjoystick.h
+@@ -153,6 +153,7 @@ extern SDL_JoystickDriver SDL_HIDAPI_JoystickDriver;
+ extern SDL_JoystickDriver SDL_IOS_JoystickDriver;
+ extern SDL_JoystickDriver SDL_LINUX_JoystickDriver;
+ extern SDL_JoystickDriver SDL_WINDOWS_JoystickDriver;
++extern SDL_JoystickDriver SDL_VITA_JoystickDriver;
+ 
+ #endif /* SDL_sysjoystick_h_ */
+ 
 diff --git a/src/joystick/vita/SDL_sysjoystick.c b/src/joystick/vita/SDL_sysjoystick.c
 new file mode 100644
-index 000000000..151e3f86c
+index 000000000..2ce10907b
 --- /dev/null
 +++ b/src/joystick/vita/SDL_sysjoystick.c
-@@ -0,0 +1,310 @@
+@@ -0,0 +1,317 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
@@ -695,7 +820,7 @@ index 000000000..151e3f86c
 + * Joystick 0 should be the system default joystick.
 + * It should return number of joysticks, or -1 on an unrecoverable fatal error.
 + */
-+int SDL_SYS_JoystickInit(void)
++int VITA_JoystickInit(void)
 +{
 +    int i;
 +
@@ -734,61 +859,58 @@ index 000000000..151e3f86c
 +  return SDL_numjoysticks;
 +}
 +
-+int SDL_SYS_NumJoysticks()
++int VITA_JoystickGetCount()
 +{
 +    return SDL_numjoysticks;
 +}
 +
-+void SDL_SYS_JoystickDetect()
++void VITA_JoystickDetect()
 +{
-+}
-+
-+/* Function to get the device-dependent name of a joystick */
-+const char * SDL_SYS_JoystickNameForDeviceIndex(int device_index)
-+{
-+   if (device_index == 1)
-+		return "PSVita Controller";
-+
-+	if (device_index == 2)
-+		return "PSVita Controller";
-+
-+	if (device_index == 3)
-+		return "PSVita Controller";
-+
-+   return "PSVita Controller";
 +}
 +
 +/* Function to perform the mapping from device index to the instance id for this index */
-+SDL_JoystickID SDL_SYS_GetInstanceIdOfDeviceIndex(int device_index)
++SDL_JoystickID VITA_JoystickGetDeviceInstanceID(int device_index)
 +{
 +    return device_index;
 +}
 +
 +/* Function to get the device-dependent name of a joystick */
-+const char *SDL_SYS_JoystickName(int index)
++const char *VITA_JoystickGetDeviceName(int index)
 +{
-+	if (index == 0)
-+   	return "PSVita Controller";
++    if (index == 0)
++        return "PSVita Controller";
 +
-+	if (index == 1)
-+   	return "PSVita Controller";
++    if (index == 1)
++        return "PSVita Controller";
 +
-+	if (index == 2)
-+   	return "PSVita Controller";
++    if (index == 2)
++        return "PSVita Controller";
 +
-+	if (index == 3)
-+   	return "PSVita Controller";
++    if (index == 3)
++        return "PSVita Controller";
 +
 +    SDL_SetError("No joystick available with that index");
 +    return(NULL);
 +}
++
++static int
++VITA_JoystickGetDevicePlayerIndex(int device_index)
++{
++    return -1;
++}
++
++static void
++VITA_JoystickSetDevicePlayerIndex(int device_index, int player_index)
++{
++}
++
 +
 +/* Function to open a joystick for use.
 +   The joystick to open is specified by the device index.
 +   This should fill the nbuttons and naxes fields of the joystick structure.
 +   It returns 0, or -1 if there is an error.
 + */
-+int SDL_SYS_JoystickOpen(SDL_Joystick *joystick, int device_index)
++int VITA_JoystickOpen(SDL_Joystick *joystick, int device_index)
 +{
 +    joystick->nbuttons = sizeof(button_map)/sizeof(*button_map);
 +    joystick->naxes = 4;
@@ -798,18 +920,12 @@ index 000000000..151e3f86c
 +    return 0;
 +}
 +
-+/* Function to determine if this joystick is attached to the system right now */
-+SDL_bool SDL_SYS_JoystickAttached(SDL_Joystick *joystick)
-+{
-+    return SDL_TRUE;
-+}
-+
 +/* Function to update the state of a joystick - called as a device poll.
 + * This function shouldn't update the joystick structure directly,
 + * but instead should call SDL_PrivateJoystick*() to deliver events
 + * and update joystick device state.
 + */
-+void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
++void VITA_JoystickUpdate(SDL_Joystick *joystick)
 +{
 +    int i;
 +    unsigned int buttons;
@@ -822,11 +938,11 @@ index 000000000..151e3f86c
 +    static unsigned char old_ry[] = { 0, 0, 0, 0 };
 +    SceCtrlData *pad = NULL;
 +
-+	  int index = (int) SDL_JoystickInstanceID(joystick);
++    int index = (int) SDL_JoystickInstanceID(joystick);
 +
 +    if (index == 0) pad = &pad0;
 +    else if (index == 1) pad = &pad1;
-+	  else if (index == 2) pad = &pad2;
++    else if (index == 2) pad = &pad2;
 +    else if (index == 3) pad = &pad3;
 +    else return;
 +
@@ -880,34 +996,50 @@ index 000000000..151e3f86c
 +}
 +
 +/* Function to close a joystick after use */
-+void SDL_SYS_JoystickClose(SDL_Joystick *joystick)
++void VITA_JoystickClose(SDL_Joystick *joystick)
 +{
 +}
 +
 +/* Function to perform any system-specific joystick related cleanup */
-+void SDL_SYS_JoystickQuit(void)
++void VITA_JoystickQuit(void)
 +{
 +}
 +
-+SDL_JoystickGUID SDL_SYS_JoystickGetDeviceGUID( int device_index )
++SDL_JoystickGUID VITA_JoystickGetDeviceGUID( int device_index )
 +{
 +    SDL_JoystickGUID guid;
 +    /* the GUID is just the first 16 chars of the name for now */
-+    const char *name = SDL_SYS_JoystickNameForDeviceIndex( device_index );
++    const char *name = VITA_JoystickGetDeviceName( device_index );
 +    SDL_zero( guid );
 +    SDL_memcpy( &guid, name, SDL_min( sizeof(guid), SDL_strlen( name ) ) );
 +    return guid;
 +}
 +
-+SDL_JoystickGUID SDL_SYS_JoystickGetGUID(SDL_Joystick * joystick)
++static int
++VITA_JoystickRumble(SDL_Joystick * joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
 +{
-+    SDL_JoystickGUID guid;
-+    /* the GUID is just the first 16 chars of the name for now */
-+    const char *name = joystick->name;
-+    SDL_zero( guid );
-+    SDL_memcpy( &guid, name, SDL_min( sizeof(guid), SDL_strlen( name ) ) );
-+    return guid;
++    return SDL_Unsupported();
 +}
++
++
++SDL_JoystickDriver SDL_VITA_JoystickDriver =
++{
++    VITA_JoystickInit,
++    VITA_JoystickGetCount,
++    VITA_JoystickDetect,
++    VITA_JoystickGetDeviceName,
++    VITA_JoystickGetDevicePlayerIndex,
++    VITA_JoystickSetDevicePlayerIndex,
++    VITA_JoystickGetDeviceGUID,
++    VITA_JoystickGetDeviceInstanceID,
++
++    VITA_JoystickOpen,
++    VITA_JoystickRumble,
++    VITA_JoystickUpdate,
++    VITA_JoystickClose,
++    VITA_JoystickQuit,
++};
++
 +
 +#endif /* SDL_JOYSTICK_VITA */
 +
