@@ -1163,7 +1163,7 @@ index fb83c875d..c871ed443 100644
      }
 diff --git a/src/render/vita/SDL_shaders_gles2_cg.c b/src/render/vita/SDL_shaders_gles2_cg.c
 new file mode 100644
-index 000000000..a904d8484
+index 000000000..49093aac3
 --- /dev/null
 +++ b/src/render/vita/SDL_shaders_gles2_cg.c
 @@ -0,0 +1,563 @@
@@ -1244,7 +1244,7 @@ index 000000000..a904d8484
 +";
 +
 +static const Uint8 GLES2_FragmentSrc_TextureABGRSrc_[] = " \
-+    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    float4 main(uniform sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
 +    { \
 +        float4 color = tex2D(u_texture, v_texCoord); \
 +        return color * u_color; \
@@ -1253,7 +1253,7 @@ index 000000000..a904d8484
 +
 +/* ARGB to ABGR conversion */
 +static const Uint8 GLES2_FragmentSrc_TextureARGBSrc_[] = " \
-+    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    float4 main(uniform sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
 +    { \
 +        float4 abgr = tex2D(u_texture, v_texCoord); \
 +        float4 color = abgr; \
@@ -1265,7 +1265,7 @@ index 000000000..a904d8484
 +
 +/* RGB to ABGR conversion */
 +static const Uint8 GLES2_FragmentSrc_TextureRGBSrc_[] = " \
-+    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    float4 main(uniform sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
 +    { \
 +        float4 abgr = tex2D(u_texture, v_texCoord); \
 +        float4 color = abgr; \
@@ -1278,7 +1278,7 @@ index 000000000..a904d8484
 +
 +/* BGR to ABGR conversion */
 +static const Uint8 GLES2_FragmentSrc_TextureBGRSrc_[] = " \
-+    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    float4 main(uniform sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
 +    { \
 +        float4 abgr = tex2D(u_texture, v_texCoord); \
 +        float4 color = abgr; \
