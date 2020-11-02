@@ -1,0 +1,3805 @@
+diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
+new file mode 100644
+index 000000000..c9ca1ca88
+--- /dev/null
++++ b/Makefile.vita.dolce
+@@ -0,0 +1,59 @@
++# Based on port by xerpi
++# Makefile to build the SDL library
++
++TARGET_LIB = libSDL2.a
++
++SOURCES = \
++	src/*.c \
++	src/atomic/*.c \
++	src/audio/*.c \
++	src/audio/vita/*.c \
++	src/cpuinfo/*.c \
++	src/events/*.c \
++	src/file/*.c \
++	src/haptic/*.c \
++	src/haptic/dummy/*.c \
++	src/joystick/*.c \
++	src/joystick/vita/*.c \
++	src/loadso/dummy/*.c \
++	src/power/*.c \
++	src/power/vita/*.c \
++	src/filesystem/dummy/*.c \
++	src/render/*.c \
++	src/render/software/*.c \
++	src/render/opengles2/SDL_render_gles2.c \
++	src/render/vita/*.c \
++	src/sensor/*.c \
++	src/sensor/dummy/*.c \
++	src/stdlib/*.c \
++	src/thread/*.c \
++	src/thread/generic/SDL_systls.c \
++	src/thread/vita/*.c \
++	src/timer/*.c \
++	src/timer/vita/*.c \
++	src/video/*.c \
++	src/video/vita/*.c \
++	src/video/yuv2rgb/*.c \
++
++OBJS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
++
++PREFIX  = arm-dolce-eabi
++CC      = $(PREFIX)-gcc
++AR      = $(PREFIX)-ar
++CFLAGS  = -g -Wl,-q -Wall -O3 -Iinclude \
++                        -D__VITA__ -D__ARM_ARCH=7 -D__ARM_ARCH_7A__ \
++                        -mfpu=neon -mcpu=cortex-a9 -mfloat-abi=hard
++ASFLAGS = $(CFLAGS)
++
++$(TARGET_LIB): $(OBJS)
++	$(AR) rcs $@ $^
++
++clean:
++	@rm -f $(TARGET_LIB) $(OBJS)
++
++install: $(TARGET_LIB)
++	@mkdir -p "$(DOLCESDK)/arm-dolce-eabi/lib"
++	@cp  $(TARGET_LIB) $(DOLCESDK)/arm-dolce-eabi/lib
++	@mkdir -p "$(DOLCESDK)/arm-dolce-eabi/include/SDL2"
++	@cp include/*.h "$(DOLCESDK)/arm-dolce-eabi/include/SDL2"
++	@echo "Installed!"
+diff --git a/include/SDL_config.h b/include/SDL_config.h
+index 3937dbc38..66ca07312 100644
+--- a/include/SDL_config.h
++++ b/include/SDL_config.h
+@@ -43,6 +43,8 @@
+ #include "SDL_config_psp.h"
+ #elif defined(__OS2__)
+ #include "SDL_config_os2.h"
++#elif defined(__VITA__)
++#include "SDL_config_vita.h"
+ #else
+ /* This is a minimal configuration just to get SDL running on new platforms. */
+ #include "SDL_config_minimal.h"
+diff --git a/include/SDL_config_vita.h b/include/SDL_config_vita.h
+new file mode 100644
+index 000000000..d03aae3e1
+--- /dev/null
++++ b/include/SDL_config_vita.h
+@@ -0,0 +1,158 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef _SDL_config_vita_h
++#define _SDL_config_vita_h
++#define SDL_config_h_
++
++#include "SDL_platform.h"
++
++/* include stdint.h here, needed on Vita to compile the yuv_rgb.h */
++#include <stdint.h>
++
++#ifdef __GNUC__
++#define HAVE_GCC_SYNC_LOCK_TEST_AND_SET 1
++#endif
++
++#define HAVE_GCC_ATOMICS    1
++
++#define STDC_HEADERS    1
++#define HAVE_ALLOCA_H       1
++#define HAVE_CTYPE_H    1
++#define HAVE_INTTYPES_H 1
++#define HAVE_LIMITS_H   1
++#define HAVE_MATH_H 1
++#define HAVE_SIGNAL_H   1
++#define HAVE_STDINT_H   1
++#define HAVE_STDIO_H    1
++#define HAVE_STRING_H   1
++#define HAVE_SYS_TYPES_H    1
++
++/* C library functions */
++#define HAVE_MALLOC 1
++#define HAVE_CALLOC 1
++#define HAVE_REALLOC    1
++#define HAVE_FREE   1
++#define HAVE_ALLOCA 1
++#define HAVE_GETENV 1
++#define HAVE_SETENV 1
++#define HAVE_PUTENV 1
++#define HAVE_SETENV 1
++#define HAVE_UNSETENV   1
++#define HAVE_QSORT  1
++#define HAVE_ABS    1
++#define HAVE_BCOPY  1
++#define HAVE_MEMSET 1
++#define HAVE_MEMCPY 1
++#define HAVE_MEMMOVE    1
++#define HAVE_MEMCMP 1
++#define HAVE_STRLEN 1
++#define HAVE_STRLCPY    1
++#define HAVE_STRLCAT    1
++#define HAVE_STRCHR 1
++#define HAVE_STRRCHR    1
++#define HAVE_STRSTR 1
++#define HAVE_STRTOL 1
++#define HAVE_STRTOUL    1
++#define HAVE_STRTOLL    1
++#define HAVE_STRTOULL   1
++#define HAVE_STRTOD 1
++#define HAVE_ATOI   1
++#define HAVE_ATOF   1
++#define HAVE_STRCMP 1
++#define HAVE_STRNCMP    1
++#define HAVE_STRCASECMP 1
++#define HAVE_STRNCASECMP 1
++#define HAVE_VSSCANF 1
++#define HAVE_VSNPRINTF  1
++#define HAVE_M_PI   1
++#define HAVE_ACOS   1
++#define HAVE_ACOSF  1
++#define HAVE_ASIN   1
++#define HAVE_ASINF  1
++#define HAVE_ATAN   1
++#define HAVE_ATANF  1
++#define HAVE_ATAN2  1
++#define HAVE_ATAN2F 1
++#define HAVE_CEIL   1
++#define HAVE_CEILF  1
++#define HAVE_COPYSIGN   1
++#define HAVE_COPYSIGNF  1
++#define HAVE_COS    1
++#define HAVE_COSF   1
++#define HAVE_EXP    1
++#define HAVE_EXPF   1
++#define HAVE_FABS   1
++#define HAVE_FABSF  1
++#define HAVE_FLOOR  1
++#define HAVE_FLOORF 1
++#define HAVE_FMOD   1
++#define HAVE_FMODF  1
++#define HAVE_LOG    1
++#define HAVE_LOGF   1
++#define HAVE_POW    1
++#define HAVE_POWF   1
++#define HAVE_SCALBN 1
++#define HAVE_SCALBNF    1
++#define HAVE_SIN    1
++#define HAVE_SINF   1
++#define HAVE_SQRT   1
++#define HAVE_SQRTF  1
++#define HAVE_TAN    1
++#define HAVE_TANF   1
++#define HAVE_SETJMP 1
++#define HAVE_NANOSLEEP  1
++#define HAVE_LOG10 1
++#define HAVE_LOG10F 1
++/* #define HAVE_SYSCONF  1 */
++/* #define HAVE_SIGACTION    1 */
++
++
++/* VITA isn't that sophisticated */
++#define LACKS_SYS_MMAN_H 1
++
++
++#define SDL_AUDIO_DRIVER_VITA  1
++#define SDL_THREAD_VITA    1
++#define SDL_JOYSTICK_VITA   1
++#define SDL_TIMERS_VITA 1
++#define SDL_POWER_VITA 1
++#define SDL_VIDEO_DRIVER_VITA  1
++
++
++#define SDL_VIDEO_RENDER_OGL_ES2 1
++#define SDL_VIDEO_OPENGL_ES2 1
++
++
++/* !!! FIXME: what does VITA do for filesystem stuff? */
++#define SDL_FILESYSTEM_DUMMY   1
++
++/* VITA doesn't have haptic device (src/haptic/dummy/\*.c) */
++#define SDL_HAPTIC_DISABLED    1
++
++/* VITA can't load shared object (src/loadso/dummy/\*.c) */
++// that' not true, but oh well
++#define SDL_LOADSO_DISABLED    1
++
++#define SDL_SENSOR_DISABLED 1
++#define SDL_SENSOR_DUMMY  1
++
++#endif /* _SDL_config_vita_h */
+diff --git a/src/SDL.c b/src/SDL.c
+index 680ed2e7d..675f07f15 100644
+--- a/src/SDL.c
++++ b/src/SDL.c
+@@ -510,6 +510,8 @@ SDL_GetPlatform()
+     return "iOS";
+ #elif __PSP__
+     return "PlayStation Portable";
++#elif __VITA__
++    return "PlayStation Vita";
+ #else
+     return "Unknown (see SDL_platform.h)";
+ #endif
+diff --git a/src/SDL_log.c b/src/SDL_log.c
+index 73c4c14a9..6f16ae11e 100644
+--- a/src/SDL_log.c
++++ b/src/SDL_log.c
+@@ -422,6 +422,13 @@ SDL_LogOutput(void *userdata, int category, SDL_LogPriority priority,
+         fprintf(pFile, "%s: %s\n", SDL_priority_prefixes[priority], message);
+         fclose (pFile);
+     }
++#elif defined(__VITA__)
++    {
++        FILE*        pFile;
++        pFile = fopen ("ux0:/data/SDL_Log.txt", "a");
++        fprintf(pFile, "%s: %s\n", SDL_priority_prefixes[priority], message);
++        fclose (pFile);
++    }
+ #endif
+ #if HAVE_STDIO_H
+     fprintf(stderr, "%s: %s\n", SDL_priority_prefixes[priority], message);
+diff --git a/src/audio/SDL_audio.c b/src/audio/SDL_audio.c
+index 313749323..6db99a6b5 100644
+--- a/src/audio/SDL_audio.c
++++ b/src/audio/SDL_audio.c
+@@ -98,6 +98,9 @@ static const AudioBootStrap *const bootstrap[] = {
+ #if SDL_AUDIO_DRIVER_PSP
+     &PSPAUDIO_bootstrap,
+ #endif
++#if SDL_AUDIO_DRIVER_VITA
++    &VITAAUD_bootstrap,
++#endif
+ #if SDL_AUDIO_DRIVER_EMSCRIPTEN
+     &EMSCRIPTENAUDIO_bootstrap,
+ #endif
+diff --git a/src/audio/SDL_sysaudio.h b/src/audio/SDL_sysaudio.h
+index 7359adcc9..08f4b2fbf 100644
+--- a/src/audio/SDL_sysaudio.h
++++ b/src/audio/SDL_sysaudio.h
+@@ -206,6 +206,7 @@ extern AudioBootStrap FUSIONSOUND_bootstrap;
+ extern AudioBootStrap openslES_bootstrap;
+ extern AudioBootStrap ANDROIDAUDIO_bootstrap;
+ extern AudioBootStrap PSPAUDIO_bootstrap;
++extern AudioBootStrap VITAAUD_bootstrap;
+ extern AudioBootStrap EMSCRIPTENAUDIO_bootstrap;
+ 
+ #endif /* SDL_sysaudio_h_ */
+diff --git a/src/audio/vita/SDL_vitaaudio.c b/src/audio/vita/SDL_vitaaudio.c
+new file mode 100644
+index 000000000..5225b8033
+--- /dev/null
++++ b/src/audio/vita/SDL_vitaaudio.c
+@@ -0,0 +1,203 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_AUDIO_DRIVER_VITA
++
++#include <stdio.h>
++#include <string.h>
++#include <stdlib.h>
++#include <malloc.h>
++
++#include "SDL_audio.h"
++#include "SDL_error.h"
++#include "SDL_timer.h"
++#include "../SDL_audio_c.h"
++#include "../SDL_audiodev_c.h"
++#include "../SDL_sysaudio.h"
++#include "SDL_vitaaudio.h"
++
++#include <psp2/kernel/threadmgr.h>
++#include <psp2/audioout.h>
++
++#define SCE_AUDIO_SAMPLE_ALIGN(s)   (((s) + 63) & ~63)
++#define SCE_AUDIO_MAX_VOLUME      0x8000
++
++/* The tag name used by VITA audio */
++#define VITAAUD_DRIVER_NAME         "vita"
++
++static int
++VITAAUD_OpenDevice(_THIS, void *handle, const char *devname, int iscapture)
++{
++    int format, mixlen, i, port = SCE_AUDIO_OUT_PORT_TYPE_MAIN;
++
++    this->hidden = (struct SDL_PrivateAudioData *)
++        SDL_malloc(sizeof(*this->hidden));
++    if (this->hidden == NULL) {
++        return SDL_OutOfMemory();
++    }
++    SDL_memset(this->hidden, 0, sizeof(*this->hidden));
++    switch (this->spec.format & 0xff) {
++        case 8:
++        case 16:
++            this->spec.format = AUDIO_S16LSB;
++            break;
++        default:
++            return SDL_SetError("Unsupported audio format");
++    }
++
++    /* The sample count must be a multiple of 64. */
++    this->spec.samples = SCE_AUDIO_SAMPLE_ALIGN(this->spec.samples);
++
++    /* Update the fragment size as size in bytes. */
++/*  SDL_CalculateAudioSpec(this->spec); MOD */
++    switch (this->spec.format) {
++    case AUDIO_U8:
++        this->spec.silence = 0x80;
++        break;
++    default:
++        this->spec.silence = 0x00;
++        break;
++    }
++    this->spec.size = SDL_AUDIO_BITSIZE(this->spec.format) / 8;
++    this->spec.size *= this->spec.channels;
++    this->spec.size *= this->spec.samples;
++
++/* ========================================== */
++
++    /* Allocate the mixing buffer.  Its size and starting address must
++       be a multiple of 64 bytes.  Our sample count is already a multiple of
++       64, so spec->size should be a multiple of 64 as well. */
++    mixlen = this->spec.size * NUM_BUFFERS;
++    this->hidden->rawbuf = (Uint8 *) memalign(64, mixlen);
++    if (this->hidden->rawbuf == NULL) {
++        return SDL_SetError("Couldn't allocate mixing buffer");
++    }
++
++    /* Setup the hardware channel. */
++    if (this->spec.channels == 1) {
++        format = SCE_AUDIO_OUT_MODE_MONO;
++    } else {
++        format = SCE_AUDIO_OUT_MODE_STEREO;
++    }
++
++    if(this->spec.freq < 48000) {
++		port = SCE_AUDIO_OUT_PORT_TYPE_BGM;
++	}
++
++    this->hidden->channel = sceAudioOutOpenPort(port, this->spec.samples, this->spec.freq, format);
++    if (this->hidden->channel < 0) {
++        free(this->hidden->rawbuf);
++        this->hidden->rawbuf = NULL;
++        return SDL_SetError("Couldn't reserve hardware channel");
++    }
++
++    memset(this->hidden->rawbuf, 0, mixlen);
++    for (i = 0; i < NUM_BUFFERS; i++) {
++        this->hidden->mixbufs[i] = &this->hidden->rawbuf[i * this->spec.size];
++    }
++
++    this->hidden->next_buffer = 0;
++    return 0;
++}
++
++static void VITAAUD_PlayDevice(_THIS)
++{
++    Uint8 *mixbuf = this->hidden->mixbufs[this->hidden->next_buffer];
++
++    int vols[2] = {SCE_AUDIO_MAX_VOLUME, SCE_AUDIO_MAX_VOLUME};
++    sceAudioOutSetVolume(this->hidden->channel, SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH, vols);
++    sceAudioOutOutput(this->hidden->channel, mixbuf);
++
++    this->hidden->next_buffer = (this->hidden->next_buffer + 1) % NUM_BUFFERS;
++}
++
++/* This function waits until it is possible to write a full sound buffer */
++static void VITAAUD_WaitDevice(_THIS)
++{
++    /* Because we block when sending audio, there's no need for this function to do anything. */
++}
++static Uint8 *VITAAUD_GetDeviceBuf(_THIS)
++{
++    return this->hidden->mixbufs[this->hidden->next_buffer];
++}
++
++static void VITAAUD_CloseDevice(_THIS)
++{
++    if (this->hidden->channel >= 0) {
++        sceAudioOutReleasePort(this->hidden->channel);
++        this->hidden->channel = -1;
++    }
++
++    if (this->hidden->rawbuf != NULL) {
++        free(this->hidden->rawbuf);
++        this->hidden->rawbuf = NULL;
++    }
++}
++static void VITAAUD_ThreadInit(_THIS)
++{
++    /* Increase the priority of this audio thread by 1 to put it
++       ahead of other SDL threads. */
++    SceUID thid;
++    SceKernelThreadInfo info;
++    thid = sceKernelGetThreadId();
++    info.size = sizeof(SceKernelThreadInfo);
++    if (sceKernelGetThreadInfo(thid, &info) == 0) {
++        sceKernelChangeThreadPriority(thid, info.currentPriority - 1);
++    }
++}
++
++
++static int
++VITAAUD_Init(SDL_AudioDriverImpl * impl)
++{
++
++    /* Set the function pointers */
++    impl->OpenDevice = VITAAUD_OpenDevice;
++    impl->PlayDevice = VITAAUD_PlayDevice;
++    impl->WaitDevice = VITAAUD_WaitDevice;
++    impl->GetDeviceBuf = VITAAUD_GetDeviceBuf;
++    impl->CloseDevice = VITAAUD_CloseDevice;
++    impl->ThreadInit = VITAAUD_ThreadInit;
++
++    /* VITA audio device */
++    impl->OnlyHasDefaultOutputDevice = 1;
++/*
++    impl->HasCaptureSupport = 1;
++
++    impl->OnlyHasDefaultInputDevice = 1;
++*/
++    /*
++    impl->DetectDevices = DSOUND_DetectDevices;
++    impl->Deinitialize = DSOUND_Deinitialize;
++    */
++    return 1;   /* this audio target is available. */
++}
++
++AudioBootStrap VITAAUD_bootstrap = {
++    "vita", "VITA audio driver", VITAAUD_Init, 0
++};
++
++ /* SDL_AUDI */
++
++#endif /* SDL_AUDIO_DRIVER_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/audio/vita/SDL_vitaaudio.h b/src/audio/vita/SDL_vitaaudio.h
+new file mode 100644
+index 000000000..0c1ad523b
+--- /dev/null
++++ b/src/audio/vita/SDL_vitaaudio.h
+@@ -0,0 +1,45 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef _SDL_vitaaudio_h
++#define _SDL_vitaaudio_h
++
++#include "../SDL_sysaudio.h"
++
++/* Hidden "this" pointer for the audio functions */
++#define _THIS   SDL_AudioDevice *this
++
++#define NUM_BUFFERS 2
++
++struct SDL_PrivateAudioData {
++    /* The hardware output channel. */
++    int     channel;
++    /* The raw allocated mixing buffer. */
++    Uint8   *rawbuf;
++    /* Individual mixing buffers. */
++    Uint8   *mixbufs[NUM_BUFFERS];
++    /* Index of the next available mixing buffer. */
++    int     next_buffer;
++};
++
++#endif /* _SDL_vitaaudio_h */
++/* vim: ts=4 sw=4
++ */
+diff --git a/src/cpuinfo/SDL_cpuinfo.c b/src/cpuinfo/SDL_cpuinfo.c
+index 9cecb4f16..cb801f564 100644
+--- a/src/cpuinfo/SDL_cpuinfo.c
++++ b/src/cpuinfo/SDL_cpuinfo.c
+@@ -452,6 +452,8 @@ CPU_haveNEON(void)
+     return IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE) != 0;
+ #elif defined(__ARM_ARCH) && (__ARM_ARCH >= 8)
+     return 1;  /* ARMv8 always has non-optional NEON support. */
++#elif __VITA__
++    return 1;
+ #elif defined(__APPLE__) && defined(__ARM_ARCH) && (__ARM_ARCH >= 7)
+     /* (note that sysctlbyname("hw.optional.neon") doesn't work!) */
+     return 1;  /* all Apple ARMv7 chips and later have NEON. */
+diff --git a/src/dynapi/SDL_dynapi.h b/src/dynapi/SDL_dynapi.h
+index 764e5d978..25b1fbce7 100644
+--- a/src/dynapi/SDL_dynapi.h
++++ b/src/dynapi/SDL_dynapi.h
+@@ -57,6 +57,8 @@
+ #define SDL_DYNAMIC_API 0
+ #elif defined(__clang_analyzer__)
+ #define SDL_DYNAMIC_API 0  /* Turn off for static analysis, so reports are more clear. */
++#elif defined(__VITA__)
++#define SDL_DYNAMIC_API 0  /* vitasdk doesn't support dynamic linking */
+ #endif
+ 
+ /* everyone else. This is where we turn on the API if nothing forced it off. */
+diff --git a/src/joystick/SDL_gamecontrollerdb.h b/src/joystick/SDL_gamecontrollerdb.h
+index 45379dabd..bb42c79a7 100644
+--- a/src/joystick/SDL_gamecontrollerdb.h
++++ b/src/joystick/SDL_gamecontrollerdb.h
+@@ -668,6 +668,9 @@ static const char *s_ControllerMappings [] =
+ #endif
+ #if defined(SDL_JOYSTICK_EMSCRIPTEN)
+     "default,Standard Gamepad,a:b0,b:b1,back:b8,dpdown:b13,dpleft:b14,dpright:b15,dpup:b12,guide:b16,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b2,y:b3,",
++#endif
++#if defined(SDL_JOYSTICK_VITA)
++    "50535669746120436f6e74726f6c6c65,PSVita Controller,y:b0,b:b1,a:b2,x:b3,leftshoulder:b4,rightshoulder:b5,dpdown:b6,dpleft:b7,dpup:b8,dpright:b9,back:b10,start:b11,leftx:a0,lefty:a1,rightx:a2,righty:a3,",
+ #endif
+     "hidapi,*,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,guide:b5,leftshoulder:b9,leftstick:b7,lefttrigger:a4,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a5,rightx:a2,righty:a3,start:b6,x:b2,y:b3,",
+     NULL
+diff --git a/src/joystick/vita/SDL_sysjoystick.c b/src/joystick/vita/SDL_sysjoystick.c
+new file mode 100644
+index 000000000..151e3f86c
+--- /dev/null
++++ b/src/joystick/vita/SDL_sysjoystick.c
+@@ -0,0 +1,310 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_JOYSTICK_VITA
++
++/* This is the PSVita implementation of the SDL joystick API */
++#include <psp2/types.h>
++#include <psp2/ctrl.h>
++#include <psp2/kernel/threadmgr.h>
++
++#include <stdio.h>      /* For the definition of NULL */
++#include <stdlib.h>
++
++#include "../SDL_sysjoystick.h"
++#include "../SDL_joystick_c.h"
++
++#include "SDL_events.h"
++#include "SDL_error.h"
++#include "SDL_thread.h"
++#include "SDL_mutex.h"
++#include "SDL_timer.h"
++
++/* Current pad state */
++static SceCtrlData pad0 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static SceCtrlData pad1 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static SceCtrlData pad2 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static SceCtrlData pad3 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static int port_map[4]= { 0, 2, 3, 4 }; //index: SDL joy number, entry: Vita port number
++static int SDL_numjoysticks = 1;
++static const unsigned int button_map[] = {
++    SCE_CTRL_TRIANGLE, SCE_CTRL_CIRCLE, SCE_CTRL_CROSS, SCE_CTRL_SQUARE,
++    SCE_CTRL_LTRIGGER, SCE_CTRL_RTRIGGER,
++    SCE_CTRL_DOWN, SCE_CTRL_LEFT, SCE_CTRL_UP, SCE_CTRL_RIGHT,
++    SCE_CTRL_SELECT, SCE_CTRL_START};
++static int analog_map[256];  /* Map analog inputs to -32768 -> 32767 */
++
++typedef struct
++{
++  int x;
++  int y;
++} point;
++
++/* 4 points define the bezier-curve. */
++/* The Vita has a good amount of analog travel, so use a linear curve */
++static point a = { 0, 0 };
++static point b = { 0, 0  };
++static point c = { 128, 32767 };
++static point d = { 128, 32767 };
++
++/* simple linear interpolation between two points */
++static SDL_INLINE void lerp (point *dest, point *a, point *b, float t)
++{
++    dest->x = a->x + (b->x - a->x)*t;
++    dest->y = a->y + (b->y - a->y)*t;
++}
++
++/* evaluate a point on a bezier-curve. t goes from 0 to 1.0 */
++static int calc_bezier_y(float t)
++{
++    point ab, bc, cd, abbc, bccd, dest;
++    lerp (&ab, &a, &b, t);           /* point between a and b */
++    lerp (&bc, &b, &c, t);           /* point between b and c */
++    lerp (&cd, &c, &d, t);           /* point between c and d */
++    lerp (&abbc, &ab, &bc, t);       /* point between ab and bc */
++    lerp (&bccd, &bc, &cd, t);       /* point between bc and cd */
++    lerp (&dest, &abbc, &bccd, t);   /* point on the bezier-curve */
++    return dest.y;
++}
++
++/* Function to scan the system for joysticks.
++ * Joystick 0 should be the system default joystick.
++ * It should return number of joysticks, or -1 on an unrecoverable fatal error.
++ */
++int SDL_SYS_JoystickInit(void)
++{
++    int i;
++
++    /* Setup input */
++    sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
++
++    /* Create an accurate map from analog inputs (0 to 255)
++       to SDL joystick positions (-32768 to 32767) */
++    for (i = 0; i < 128; i++)
++    {
++        float t = (float)i/127.0f;
++        analog_map[i+128] = calc_bezier_y(t);
++        analog_map[127-i] = -1 * analog_map[i+128];
++    }
++
++	SceCtrlPortInfo myPortInfo;
++
++	// Assume we have at least one controller, even when nothing is paired
++	// This way the user can jump in, pair a controller
++	// and control things immediately even if it is paired
++	// after the app has already started.
++
++	SDL_numjoysticks = 1;
++
++	//How many additional paired controllers are there?
++	sceCtrlGetControllerPortInfo(&myPortInfo);
++	//On Vita TV, port 0 and 1 are the same controller
++	//and that is the first one, so start at port 2
++	for (i=2; i<=4; i++)
++	{
++		if (myPortInfo.port[i]!=SCE_CTRL_TYPE_UNPAIRED)
++		{
++			SDL_numjoysticks++;
++		}
++	}
++  return SDL_numjoysticks;
++}
++
++int SDL_SYS_NumJoysticks()
++{
++    return SDL_numjoysticks;
++}
++
++void SDL_SYS_JoystickDetect()
++{
++}
++
++/* Function to get the device-dependent name of a joystick */
++const char * SDL_SYS_JoystickNameForDeviceIndex(int device_index)
++{
++   if (device_index == 1)
++		return "PSVita Controller";
++
++	if (device_index == 2)
++		return "PSVita Controller";
++
++	if (device_index == 3)
++		return "PSVita Controller";
++
++   return "PSVita Controller";
++}
++
++/* Function to perform the mapping from device index to the instance id for this index */
++SDL_JoystickID SDL_SYS_GetInstanceIdOfDeviceIndex(int device_index)
++{
++    return device_index;
++}
++
++/* Function to get the device-dependent name of a joystick */
++const char *SDL_SYS_JoystickName(int index)
++{
++	if (index == 0)
++   	return "PSVita Controller";
++
++	if (index == 1)
++   	return "PSVita Controller";
++
++	if (index == 2)
++   	return "PSVita Controller";
++
++	if (index == 3)
++   	return "PSVita Controller";
++
++    SDL_SetError("No joystick available with that index");
++    return(NULL);
++}
++
++/* Function to open a joystick for use.
++   The joystick to open is specified by the device index.
++   This should fill the nbuttons and naxes fields of the joystick structure.
++   It returns 0, or -1 if there is an error.
++ */
++int SDL_SYS_JoystickOpen(SDL_Joystick *joystick, int device_index)
++{
++    joystick->nbuttons = sizeof(button_map)/sizeof(*button_map);
++    joystick->naxes = 4;
++    joystick->nhats = 0;
++    joystick->instance_id = device_index;
++
++    return 0;
++}
++
++/* Function to determine if this joystick is attached to the system right now */
++SDL_bool SDL_SYS_JoystickAttached(SDL_Joystick *joystick)
++{
++    return SDL_TRUE;
++}
++
++/* Function to update the state of a joystick - called as a device poll.
++ * This function shouldn't update the joystick structure directly,
++ * but instead should call SDL_PrivateJoystick*() to deliver events
++ * and update joystick device state.
++ */
++void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
++{
++    int i;
++    unsigned int buttons;
++    unsigned int changed;
++    unsigned char lx, ly, rx, ry;
++    static unsigned int old_buttons[] = { 0, 0, 0, 0 };
++    static unsigned char old_lx[] = { 0, 0, 0, 0 };
++    static unsigned char old_ly[] = { 0, 0, 0, 0 };
++    static unsigned char old_rx[] = { 0, 0, 0, 0 };
++    static unsigned char old_ry[] = { 0, 0, 0, 0 };
++    SceCtrlData *pad = NULL;
++
++	  int index = (int) SDL_JoystickInstanceID(joystick);
++
++    if (index == 0) pad = &pad0;
++    else if (index == 1) pad = &pad1;
++	  else if (index == 2) pad = &pad2;
++    else if (index == 3) pad = &pad3;
++    else return;
++
++    sceCtrlPeekBufferPositive(port_map[index], pad, 1);
++
++    buttons = pad->buttons;
++    lx = pad->lx;
++    ly = pad->ly;
++    rx = pad->rx;
++    ry = pad->ry;
++/*
++    for(i=0; i<sizeof(button_map)/sizeof(button_map[0]); i++) {
++        SDL_PrivateJoystickButton(
++            joystick, i,
++            (buttons & button_map[i]) ?
++            SDL_PRESSED : SDL_RELEASED);
++}
++*/
++    // Axes
++
++    if(old_lx[index] != lx) {
++        SDL_PrivateJoystickAxis(joystick, 0, analog_map[lx]);
++        old_lx[index] = lx;
++    }
++    if(old_ly[index] != ly) {
++        SDL_PrivateJoystickAxis(joystick, 1, analog_map[ly]);
++        old_ly[index] = ly;
++    }
++    if(old_rx[index] != rx) {
++        SDL_PrivateJoystickAxis(joystick, 2, analog_map[rx]);
++        old_rx[index] = rx;
++    }
++    if(old_ry[index] != ry) {
++        SDL_PrivateJoystickAxis(joystick, 3, analog_map[ry]);
++        old_ry[index] = ry;
++    }
++
++    // Buttons
++    changed = old_buttons[index] ^ buttons;
++    old_buttons[index] = buttons;
++    if(changed) {
++        for(i=0; i<sizeof(button_map)/sizeof(button_map[0]); i++) {
++            if(changed & button_map[i]) {
++                SDL_PrivateJoystickButton(
++                    joystick, i,
++                    (buttons & button_map[i]) ?
++                    SDL_PRESSED : SDL_RELEASED);
++            }
++        }
++     }
++}
++
++/* Function to close a joystick after use */
++void SDL_SYS_JoystickClose(SDL_Joystick *joystick)
++{
++}
++
++/* Function to perform any system-specific joystick related cleanup */
++void SDL_SYS_JoystickQuit(void)
++{
++}
++
++SDL_JoystickGUID SDL_SYS_JoystickGetDeviceGUID( int device_index )
++{
++    SDL_JoystickGUID guid;
++    /* the GUID is just the first 16 chars of the name for now */
++    const char *name = SDL_SYS_JoystickNameForDeviceIndex( device_index );
++    SDL_zero( guid );
++    SDL_memcpy( &guid, name, SDL_min( sizeof(guid), SDL_strlen( name ) ) );
++    return guid;
++}
++
++SDL_JoystickGUID SDL_SYS_JoystickGetGUID(SDL_Joystick * joystick)
++{
++    SDL_JoystickGUID guid;
++    /* the GUID is just the first 16 chars of the name for now */
++    const char *name = joystick->name;
++    SDL_zero( guid );
++    SDL_memcpy( &guid, name, SDL_min( sizeof(guid), SDL_strlen( name ) ) );
++    return guid;
++}
++
++#endif /* SDL_JOYSTICK_VITA */
++
++/* vim: ts=4 sw=4
++ */
+diff --git a/src/power/SDL_power.c b/src/power/SDL_power.c
+index ca19d4492..7a065c6a2 100644
+--- a/src/power/SDL_power.c
++++ b/src/power/SDL_power.c
+@@ -68,6 +68,9 @@ static SDL_GetPowerInfo_Impl implementations[] = {
+ #ifdef SDL_POWER_PSP        /* handles PSP. */
+     SDL_GetPowerInfo_PSP,
+ #endif
++#ifdef SDL_POWER_VITA        /* handles PSVita. */
++    SDL_GetPowerInfo_VITA,
++#endif
+ #ifdef SDL_POWER_WINRT          /* handles WinRT */
+     SDL_GetPowerInfo_WinRT,
+ #endif
+diff --git a/src/power/SDL_syspower.h b/src/power/SDL_syspower.h
+index f28cc982b..23832bf84 100644
+--- a/src/power/SDL_syspower.h
++++ b/src/power/SDL_syspower.h
+@@ -38,6 +38,7 @@ SDL_bool SDL_GetPowerInfo_MacOSX(SDL_PowerState *, int *, int *);
+ SDL_bool SDL_GetPowerInfo_Haiku(SDL_PowerState *, int *, int *);
+ SDL_bool SDL_GetPowerInfo_Android(SDL_PowerState *, int *, int *);
+ SDL_bool SDL_GetPowerInfo_PSP(SDL_PowerState *, int *, int *);
++SDL_bool SDL_GetPowerInfo_VITA(SDL_PowerState *, int *, int *);
+ SDL_bool SDL_GetPowerInfo_WinRT(SDL_PowerState *, int *, int *);
+ SDL_bool SDL_GetPowerInfo_Emscripten(SDL_PowerState *, int *, int *);
+ 
+diff --git a/src/power/vita/SDL_syspower.c b/src/power/vita/SDL_syspower.c
+new file mode 100644
+index 000000000..5aa8df0e9
+--- /dev/null
++++ b/src/power/vita/SDL_syspower.c
+@@ -0,0 +1,68 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#include "../../SDL_internal.h"
++
++#ifndef SDL_POWER_DISABLED
++#if SDL_POWER_VITA
++
++#include "SDL_power.h"
++#include <psp2/power.h>
++
++
++SDL_bool
++SDL_GetPowerInfo_VITA(SDL_PowerState * state, int *seconds,
++                            int *percent)
++{
++    int battery = 1;
++    int plugged = scePowerIsPowerOnline();
++    int charging = scePowerIsBatteryCharging();
++
++    *state = SDL_POWERSTATE_UNKNOWN;
++    *seconds = -1;
++    *percent = -1;
++
++    if (!battery) {
++        *state = SDL_POWERSTATE_NO_BATTERY;
++        *seconds = -1;
++        *percent = -1;
++    } else if (charging) {
++        *state = SDL_POWERSTATE_CHARGING;
++        *percent = scePowerGetBatteryLifePercent();
++        *seconds = scePowerGetBatteryLifeTime()*60;
++    } else if (plugged) {
++        *state = SDL_POWERSTATE_CHARGED;
++        *percent = scePowerGetBatteryLifePercent();
++        *seconds = scePowerGetBatteryLifeTime()*60;
++    } else {
++        *state = SDL_POWERSTATE_ON_BATTERY;
++        *percent = scePowerGetBatteryLifePercent();
++        *seconds = scePowerGetBatteryLifeTime()*60;
++    }
++
++
++    return SDL_TRUE;            /* always the definitive answer on VITA. */
++}
++
++#endif /* SDL_POWER_VITA */
++#endif /* SDL_POWER_DISABLED */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/render/opengles2/SDL_render_gles2.c b/src/render/opengles2/SDL_render_gles2.c
+index fb83c875d..c871ed443 100644
+--- a/src/render/opengles2/SDL_render_gles2.c
++++ b/src/render/opengles2/SDL_render_gles2.c
+@@ -2057,7 +2057,11 @@ GLES2_CreateRenderer(SDL_Window *window, Uint32 flags)
+     nFormats = 1;
+ #else /* !ZUNE_HD */
+     data->glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS, &nFormats);
++#if defined(__VITA__)
++    hasCompiler = GL_TRUE;
++#else
+     data->glGetBooleanv(GL_SHADER_COMPILER, &hasCompiler);
++#endif
+     if (hasCompiler) {
+         ++nFormats;
+     }
+diff --git a/src/render/vita/SDL_shaders_gles2_cg.c b/src/render/vita/SDL_shaders_gles2_cg.c
+new file mode 100644
+index 000000000..a904d8484
+--- /dev/null
++++ b/src/render/vita/SDL_shaders_gles2_cg.c
+@@ -0,0 +1,563 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_RENDER_OGL_ES2 && !SDL_RENDER_DISABLED
++
++#include "SDL_video.h"
++#include "SDL_opengles2.h"
++#include "../opengles2/SDL_shaders_gles2.h"
++#include "SDL_stdinc.h"
++
++/* While Vita is gles2-compliant, shaders should be in Cg format, not glsl */
++
++/*************************************************************************************************
++ * Vertex/fragment shader source                                                                 *
++ *************************************************************************************************/
++/* Notes on a_angle:
++   * It is a vector containing sin and cos for rotation matrix
++   * To get correct rotation for most cases when a_angle is disabled cos
++     value is decremented by 1.0 to get proper output with 0.0 which is
++     default value
++*/
++static const Uint8 GLES2_VertexSrc_Default_[] = " \
++    struct _Output { \
++      float2 v_texCoord : TEXCOORD0; \
++      float4 position : POSITION; \
++      float pointsize    : PSIZE; \
++    }; \
++\
++    _Output main( \
++        uniform float4x4 u_projection, \
++        float2 a_position, \
++        float2 a_texCoord, \
++        float2 a_angle, \
++        float2 a_center \
++    ) \
++    { \
++        _Output OUT; \
++\
++        float s = a_angle[0]; \
++        float c = a_angle[1] + 1.0; \
++        float2x2 rotationMatrix = float2x2(c, s, -s, c); \
++        float2 position = mul((a_position - a_center) + a_center, rotationMatrix); \
++\
++        OUT.v_texCoord = a_texCoord; \
++        OUT.position =  mul(float4(position, 0.0, 1.0), u_projection);\
++        OUT.pointsize = 1.0; \
++        return OUT; \
++    } \
++";
++
++static const Uint8 GLES2_FragmentSrc_SolidSrc_[] = " \
++    float4 main(uniform float4 u_color : COLOR) : COLOR \
++    { \
++        return u_color; \
++    } \
++";
++
++static const Uint8 GLES2_FragmentSrc_TextureABGRSrc_[] = " \
++    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    { \
++        float4 color = tex2D(u_texture, v_texCoord); \
++        return color * u_color; \
++    } \
++";
++
++/* ARGB to ABGR conversion */
++static const Uint8 GLES2_FragmentSrc_TextureARGBSrc_[] = " \
++    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    { \
++        float4 abgr = tex2D(u_texture, v_texCoord); \
++        float4 color = abgr; \
++        color.r = abgr.b; \
++        color.b = abgr.r; \
++        return color * u_color; \
++    } \
++";
++
++/* RGB to ABGR conversion */
++static const Uint8 GLES2_FragmentSrc_TextureRGBSrc_[] = " \
++    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    { \
++        float4 abgr = tex2D(u_texture, v_texCoord); \
++        float4 color = abgr; \
++        color.r = abgr.b; \
++        color.b = abgr.r; \
++        color.a = 1.0; \
++        return color * u_color; \
++    } \
++";
++
++/* BGR to ABGR conversion */
++static const Uint8 GLES2_FragmentSrc_TextureBGRSrc_[] = " \
++    float4 main(sampler2D u_texture, uniform float4 u_color : COLOR, float2 v_texCoord : TEXCOORD0 ) : COLOR \
++    { \
++        float4 abgr = tex2D(u_texture, v_texCoord); \
++        float4 color = abgr; \
++        color.a = 1.0; \
++        return color * u_color; \
++    } \
++";
++
++// VITA : TODO
++
++#define JPEG_SHADER_CONSTANTS                                   \
++"// YUV offset \n"                                              \
++"const vec3 offset = vec3(0, -0.501960814, -0.501960814);\n"    \
++"\n"                                                            \
++"// RGB coefficients \n"                                        \
++"const mat3 matrix = mat3( 1,       1,        1,\n"             \
++"                          0,      -0.3441,   1.772,\n"         \
++"                          1.402,  -0.7141,   0);\n"            \
++
++#define BT601_SHADER_CONSTANTS                                  \
++"// YUV offset \n"                                              \
++"const vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n" \
++"\n"                                                            \
++"// RGB coefficients \n"                                        \
++"const mat3 matrix = mat3( 1.1644,  1.1644,   1.1644,\n"        \
++"                          0,      -0.3918,   2.0172,\n"        \
++"                          1.596,  -0.813,    0);\n"            \
++
++#define BT709_SHADER_CONSTANTS                                  \
++"// YUV offset \n"                                              \
++"const vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n" \
++"\n"                                                            \
++"// RGB coefficients \n"                                        \
++"const mat3 matrix = mat3( 1.1644,  1.1644,   1.1644,\n"        \
++"                          0,      -0.2132,   2.1124,\n"        \
++"                          1.7927, -0.5329,   0);\n"            \
++
++
++#define YUV_SHADER_PROLOGUE                                     \
++"precision mediump float;\n"                                    \
++"uniform sampler2D u_texture;\n"                                \
++"uniform sampler2D u_texture_u;\n"                              \
++"uniform sampler2D u_texture_v;\n"                              \
++"uniform vec4 u_color;\n"                                  \
++"varying vec2 v_texCoord;\n"                                    \
++"\n"                                                            \
++
++#define YUV_SHADER_BODY                                         \
++"\n"                                                            \
++"void main()\n"                                                 \
++"{\n"                                                           \
++"    mediump vec3 yuv;\n"                                       \
++"    lowp vec3 rgb;\n"                                          \
++"\n"                                                            \
++"    // Get the YUV values \n"                                  \
++"    yuv.x = texture2D(u_texture,   v_texCoord).r;\n"           \
++"    yuv.y = texture2D(u_texture_u, v_texCoord).r;\n"           \
++"    yuv.z = texture2D(u_texture_v, v_texCoord).r;\n"           \
++"\n"                                                            \
++"    // Do the color transform \n"                              \
++"    yuv += offset;\n"                                          \
++"    rgb = matrix * yuv;\n"                                     \
++"\n"                                                            \
++"    // That was easy. :) \n"                                   \
++"    gl_FragColor = vec4(rgb, 1);\n"                            \
++"    gl_FragColor *= u_color;\n"                           \
++"}"                                                             \
++
++#define NV12_SHADER_BODY                                        \
++"\n"                                                            \
++"void main()\n"                                                 \
++"{\n"                                                           \
++"    mediump vec3 yuv;\n"                                       \
++"    lowp vec3 rgb;\n"                                          \
++"\n"                                                            \
++"    // Get the YUV values \n"                                  \
++"    yuv.x = texture2D(u_texture,   v_texCoord).r;\n"           \
++"    yuv.yz = texture2D(u_texture_u, v_texCoord).ra;\n"         \
++"\n"                                                            \
++"    // Do the color transform \n"                              \
++"    yuv += offset;\n"                                          \
++"    rgb = matrix * yuv;\n"                                     \
++"\n"                                                            \
++"    // That was easy. :) \n"                                   \
++"    gl_FragColor = vec4(rgb, 1);\n"                            \
++"    gl_FragColor *= u_color;\n"                           \
++"}"                                                             \
++
++#define NV21_SHADER_BODY                                        \
++"\n"                                                            \
++"void main()\n"                                                 \
++"{\n"                                                           \
++"    mediump vec3 yuv;\n"                                       \
++"    lowp vec3 rgb;\n"                                          \
++"\n"                                                            \
++"    // Get the YUV values \n"                                  \
++"    yuv.x = texture2D(u_texture,   v_texCoord).r;\n"           \
++"    yuv.yz = texture2D(u_texture_u, v_texCoord).ar;\n"         \
++"\n"                                                            \
++"    // Do the color transform \n"                              \
++"    yuv += offset;\n"                                          \
++"    rgb = matrix * yuv;\n"                                     \
++"\n"                                                            \
++"    // That was easy. :) \n"                                   \
++"    gl_FragColor = vec4(rgb, 1);\n"                            \
++"    gl_FragColor *= u_color;\n"                           \
++"}"                                                             \
++
++/* YUV to ABGR conversion */
++static const Uint8 GLES2_FragmentSrc_TextureYUVJPEGSrc_[] = \
++        YUV_SHADER_PROLOGUE \
++        JPEG_SHADER_CONSTANTS \
++        YUV_SHADER_BODY \
++;
++static const Uint8 GLES2_FragmentSrc_TextureYUVBT601Src_[] = \
++        YUV_SHADER_PROLOGUE \
++        BT601_SHADER_CONSTANTS \
++        YUV_SHADER_BODY \
++;
++static const Uint8 GLES2_FragmentSrc_TextureYUVBT709Src_[] = \
++        YUV_SHADER_PROLOGUE \
++        BT709_SHADER_CONSTANTS \
++        YUV_SHADER_BODY \
++;
++
++/* NV12 to ABGR conversion */
++static const Uint8 GLES2_FragmentSrc_TextureNV12JPEGSrc_[] = \
++        YUV_SHADER_PROLOGUE \
++        JPEG_SHADER_CONSTANTS \
++        NV12_SHADER_BODY \
++;
++static const Uint8 GLES2_FragmentSrc_TextureNV12BT601Src_[] = \
++        YUV_SHADER_PROLOGUE \
++        BT601_SHADER_CONSTANTS \
++        NV12_SHADER_BODY \
++;
++static const Uint8 GLES2_FragmentSrc_TextureNV12BT709Src_[] = \
++        YUV_SHADER_PROLOGUE \
++        BT709_SHADER_CONSTANTS \
++        NV12_SHADER_BODY \
++;
++
++/* NV21 to ABGR conversion */
++static const Uint8 GLES2_FragmentSrc_TextureNV21JPEGSrc_[] = \
++        YUV_SHADER_PROLOGUE \
++        JPEG_SHADER_CONSTANTS \
++        NV21_SHADER_BODY \
++;
++static const Uint8 GLES2_FragmentSrc_TextureNV21BT601Src_[] = \
++        YUV_SHADER_PROLOGUE \
++        BT601_SHADER_CONSTANTS \
++        NV21_SHADER_BODY \
++;
++static const Uint8 GLES2_FragmentSrc_TextureNV21BT709Src_[] = \
++        YUV_SHADER_PROLOGUE \
++        BT709_SHADER_CONSTANTS \
++        NV21_SHADER_BODY \
++;
++
++/* Custom Android video format texture */
++static const Uint8 GLES2_FragmentSrc_TextureExternalOESSrc_[] = " \
++    #extension GL_OES_EGL_image_external : require\n\
++    precision mediump float; \
++    uniform samplerExternalOES u_texture; \
++    uniform vec4 u_color; \
++    varying vec2 v_texCoord; \
++    \
++    void main() \
++    { \
++        gl_FragColor = texture2D(u_texture, v_texCoord); \
++        gl_FragColor *= u_color; \
++    } \
++";
++
++static const GLES2_ShaderInstance GLES2_VertexSrc_Default = {
++    GL_VERTEX_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_VertexSrc_Default_),
++    GLES2_VertexSrc_Default_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_SolidSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_SolidSrc_),
++    GLES2_FragmentSrc_SolidSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureABGRSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureABGRSrc_),
++    GLES2_FragmentSrc_TextureABGRSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureARGBSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureARGBSrc_),
++    GLES2_FragmentSrc_TextureARGBSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureRGBSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureRGBSrc_),
++    GLES2_FragmentSrc_TextureRGBSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureBGRSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureBGRSrc_),
++    GLES2_FragmentSrc_TextureBGRSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureYUVJPEGSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureYUVJPEGSrc_),
++    GLES2_FragmentSrc_TextureYUVJPEGSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureYUVBT601Src = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureYUVBT601Src_),
++    GLES2_FragmentSrc_TextureYUVBT601Src_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureYUVBT709Src = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureYUVBT709Src_),
++    GLES2_FragmentSrc_TextureYUVBT709Src_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureNV12JPEGSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureNV12JPEGSrc_),
++    GLES2_FragmentSrc_TextureNV12JPEGSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureNV12BT601Src = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureNV12BT601Src_),
++    GLES2_FragmentSrc_TextureNV12BT601Src_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureNV21BT709Src = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureNV21BT709Src_),
++    GLES2_FragmentSrc_TextureNV21BT709Src_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureNV21JPEGSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureNV21JPEGSrc_),
++    GLES2_FragmentSrc_TextureNV21JPEGSrc_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureNV21BT601Src = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureNV21BT601Src_),
++    GLES2_FragmentSrc_TextureNV21BT601Src_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureNV12BT709Src = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureNV12BT709Src_),
++    GLES2_FragmentSrc_TextureNV12BT709Src_
++};
++
++static const GLES2_ShaderInstance GLES2_FragmentSrc_TextureExternalOESSrc = {
++    GL_FRAGMENT_SHADER,
++    GLES2_SOURCE_SHADER,
++    sizeof(GLES2_FragmentSrc_TextureExternalOESSrc_),
++    GLES2_FragmentSrc_TextureExternalOESSrc_
++};
++
++
++/*************************************************************************************************
++ * Vertex/fragment shader definitions                                                            *
++ *************************************************************************************************/
++
++static GLES2_Shader GLES2_VertexShader_Default = {
++    1,
++    {
++        &GLES2_VertexSrc_Default
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_SolidSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_SolidSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureABGRSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureABGRSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureARGBSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureARGBSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureRGBSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureRGBSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureBGRSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureBGRSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureYUVJPEGSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureYUVJPEGSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureYUVBT601Src = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureYUVBT601Src
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureYUVBT709Src = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureYUVBT709Src
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureNV12JPEGSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureNV12JPEGSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureNV12BT601Src = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureNV12BT601Src
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureNV12BT709Src = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureNV12BT709Src
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureNV21JPEGSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureNV21JPEGSrc
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureNV21BT601Src = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureNV21BT601Src
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureNV21BT709Src = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureNV21BT709Src
++    }
++};
++
++static GLES2_Shader GLES2_FragmentShader_TextureExternalOESSrc = {
++    1,
++    {
++        &GLES2_FragmentSrc_TextureExternalOESSrc
++    }
++};
++
++
++/*************************************************************************************************
++ * Shader selector                                                                               *
++ *************************************************************************************************/
++
++const GLES2_Shader *GLES2_GetShader(GLES2_ShaderType type)
++{
++    switch (type) {
++    case GLES2_SHADER_VERTEX_DEFAULT:
++        return &GLES2_VertexShader_Default;
++    case GLES2_SHADER_FRAGMENT_SOLID_SRC:
++        return &GLES2_FragmentShader_SolidSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_ABGR_SRC:
++        return &GLES2_FragmentShader_TextureABGRSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_ARGB_SRC:
++        return &GLES2_FragmentShader_TextureARGBSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_RGB_SRC:
++        return &GLES2_FragmentShader_TextureRGBSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_BGR_SRC:
++        return &GLES2_FragmentShader_TextureBGRSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_YUV_JPEG_SRC:
++        return &GLES2_FragmentShader_TextureYUVJPEGSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_YUV_BT601_SRC:
++        return &GLES2_FragmentShader_TextureYUVBT601Src;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_YUV_BT709_SRC:
++        return &GLES2_FragmentShader_TextureYUVBT709Src;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_NV12_JPEG_SRC:
++        return &GLES2_FragmentShader_TextureNV12JPEGSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_NV12_BT601_SRC:
++        return &GLES2_FragmentShader_TextureNV12BT601Src;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_NV12_BT709_SRC:
++        return &GLES2_FragmentShader_TextureNV12BT709Src;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_NV21_JPEG_SRC:
++        return &GLES2_FragmentShader_TextureNV21JPEGSrc;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_NV21_BT601_SRC:
++        return &GLES2_FragmentShader_TextureNV21BT601Src;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_NV21_BT709_SRC:
++        return &GLES2_FragmentShader_TextureNV21BT709Src;
++    case GLES2_SHADER_FRAGMENT_TEXTURE_EXTERNAL_OES_SRC:
++        return &GLES2_FragmentShader_TextureExternalOESSrc;
++    default:
++        return NULL;
++    }
++}
++
++#endif /* SDL_VIDEO_RENDER_OGL_ES2 && !SDL_RENDER_DISABLED */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/thread/SDL_thread_c.h b/src/thread/SDL_thread_c.h
+index 9cc52af1a..0d8b434ac 100644
+--- a/src/thread/SDL_thread_c.h
++++ b/src/thread/SDL_thread_c.h
+@@ -34,6 +34,8 @@
+ #include "windows/SDL_systhread_c.h"
+ #elif SDL_THREAD_PSP
+ #include "psp/SDL_systhread_c.h"
++#elif SDL_THREAD_VITA
++#include "vita/SDL_systhread_c.h"
+ #elif SDL_THREAD_STDCPP
+ #include "stdcpp/SDL_systhread_c.h"
+ #else
+diff --git a/src/thread/vita/SDL_syscond.c b/src/thread/vita/SDL_syscond.c
+new file mode 100644
+index 000000000..ad2391d02
+--- /dev/null
++++ b/src/thread/vita/SDL_syscond.c
+@@ -0,0 +1,224 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_THREAD_VITA
++
++/* An implementation of condition variables using semaphores and mutexes */
++/*
++   This implementation borrows heavily from the BeOS condition variable
++   implementation, written by Christopher Tate and Owen Smith.  Thanks!
++ */
++
++#include "SDL_thread.h"
++
++struct SDL_cond
++{
++    SDL_mutex *lock;
++    int waiting;
++    int signals;
++    SDL_sem *wait_sem;
++    SDL_sem *wait_done;
++};
++
++/* Create a condition variable */
++SDL_cond *
++SDL_CreateCond(void)
++{
++    SDL_cond *cond;
++
++    cond = (SDL_cond *) SDL_malloc(sizeof(SDL_cond));
++    if (cond) {
++        cond->lock = SDL_CreateMutex();
++        cond->wait_sem = SDL_CreateSemaphore(0);
++        cond->wait_done = SDL_CreateSemaphore(0);
++        cond->waiting = cond->signals = 0;
++        if (!cond->lock || !cond->wait_sem || !cond->wait_done) {
++            SDL_DestroyCond(cond);
++            cond = NULL;
++        }
++    } else {
++        SDL_OutOfMemory();
++    }
++    return (cond);
++}
++
++/* Destroy a condition variable */
++void
++SDL_DestroyCond(SDL_cond * cond)
++{
++    if (cond) {
++        if (cond->wait_sem) {
++            SDL_DestroySemaphore(cond->wait_sem);
++        }
++        if (cond->wait_done) {
++            SDL_DestroySemaphore(cond->wait_done);
++        }
++        if (cond->lock) {
++            SDL_DestroyMutex(cond->lock);
++        }
++        SDL_free(cond);
++    }
++}
++
++/* Restart one of the threads that are waiting on the condition variable */
++int
++SDL_CondSignal(SDL_cond * cond)
++{
++    if (!cond) {
++        return SDL_SetError("Passed a NULL condition variable");
++    }
++
++    /* If there are waiting threads not already signalled, then
++       signal the condition and wait for the thread to respond.
++     */
++    SDL_LockMutex(cond->lock);
++    if (cond->waiting > cond->signals) {
++        ++cond->signals;
++        SDL_SemPost(cond->wait_sem);
++        SDL_UnlockMutex(cond->lock);
++        SDL_SemWait(cond->wait_done);
++    } else {
++        SDL_UnlockMutex(cond->lock);
++    }
++
++    return 0;
++}
++
++/* Restart all threads that are waiting on the condition variable */
++int
++SDL_CondBroadcast(SDL_cond * cond)
++{
++    if (!cond) {
++        return SDL_SetError("Passed a NULL condition variable");
++    }
++
++    /* If there are waiting threads not already signalled, then
++       signal the condition and wait for the thread to respond.
++     */
++    SDL_LockMutex(cond->lock);
++    if (cond->waiting > cond->signals) {
++        int i, num_waiting;
++
++        num_waiting = (cond->waiting - cond->signals);
++        cond->signals = cond->waiting;
++        for (i = 0; i < num_waiting; ++i) {
++            SDL_SemPost(cond->wait_sem);
++        }
++        /* Now all released threads are blocked here, waiting for us.
++           Collect them all (and win fabulous prizes!) :-)
++         */
++        SDL_UnlockMutex(cond->lock);
++        for (i = 0; i < num_waiting; ++i) {
++            SDL_SemWait(cond->wait_done);
++        }
++    } else {
++        SDL_UnlockMutex(cond->lock);
++    }
++
++    return 0;
++}
++
++/* Wait on the condition variable for at most 'ms' milliseconds.
++   The mutex must be locked before entering this function!
++   The mutex is unlocked during the wait, and locked again after the wait.
++
++Typical use:
++
++Thread A:
++    SDL_LockMutex(lock);
++    while ( ! condition ) {
++        SDL_CondWait(cond, lock);
++    }
++    SDL_UnlockMutex(lock);
++
++Thread B:
++    SDL_LockMutex(lock);
++    ...
++    condition = true;
++    ...
++    SDL_CondSignal(cond);
++    SDL_UnlockMutex(lock);
++ */
++int
++SDL_CondWaitTimeout(SDL_cond * cond, SDL_mutex * mutex, Uint32 ms)
++{
++    int retval;
++
++    if (!cond) {
++        return SDL_SetError("Passed a NULL condition variable");
++    }
++
++    /* Obtain the protection mutex, and increment the number of waiters.
++       This allows the signal mechanism to only perform a signal if there
++       are waiting threads.
++     */
++    SDL_LockMutex(cond->lock);
++    ++cond->waiting;
++    SDL_UnlockMutex(cond->lock);
++
++    /* Unlock the mutex, as is required by condition variable semantics */
++    SDL_UnlockMutex(mutex);
++
++    /* Wait for a signal */
++    if (ms == SDL_MUTEX_MAXWAIT) {
++        retval = SDL_SemWait(cond->wait_sem);
++    } else {
++        retval = SDL_SemWaitTimeout(cond->wait_sem, ms);
++    }
++
++    /* Let the signaler know we have completed the wait, otherwise
++       the signaler can race ahead and get the condition semaphore
++       if we are stopped between the mutex unlock and semaphore wait,
++       giving a deadlock.  See the following URL for details:
++       http://www-classic.be.com/aboutbe/benewsletter/volume_III/Issue40.html
++     */
++    SDL_LockMutex(cond->lock);
++    if (cond->signals > 0) {
++        /* If we timed out, we need to eat a condition signal */
++        if (retval > 0) {
++            SDL_SemWait(cond->wait_sem);
++        }
++        /* We always notify the signal thread that we are done */
++        SDL_SemPost(cond->wait_done);
++
++        /* Signal handshake complete */
++        --cond->signals;
++    }
++    --cond->waiting;
++    SDL_UnlockMutex(cond->lock);
++
++    /* Lock the mutex, as is required by condition variable semantics */
++    SDL_LockMutex(mutex);
++
++    return retval;
++}
++
++/* Wait on the condition variable forever */
++int
++SDL_CondWait(SDL_cond * cond, SDL_mutex * mutex)
++{
++    return SDL_CondWaitTimeout(cond, mutex, SDL_MUTEX_MAXWAIT);
++}
++
++#endif /* SDL_THREAD_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/thread/vita/SDL_sysmutex.c b/src/thread/vita/SDL_sysmutex.c
+new file mode 100644
+index 000000000..6584fb2bf
+--- /dev/null
++++ b/src/thread/vita/SDL_sysmutex.c
+@@ -0,0 +1,136 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_THREAD_VITA
++
++/* An implementation of mutexes using semaphores */
++
++#include "SDL_thread.h"
++#include "SDL_systhread_c.h"
++
++
++struct SDL_mutex
++{
++    int recursive;
++    SDL_threadID owner;
++    SDL_sem *sem;
++};
++
++/* Create a mutex */
++SDL_mutex *
++SDL_CreateMutex(void)
++{
++    SDL_mutex *mutex;
++
++    /* Allocate mutex memory */
++    mutex = (SDL_mutex *) SDL_malloc(sizeof(*mutex));
++    if (mutex) {
++        /* Create the mutex semaphore, with initial value 1 */
++        mutex->sem = SDL_CreateSemaphore(1);
++        mutex->recursive = 0;
++        mutex->owner = 0;
++        if (!mutex->sem) {
++            SDL_free(mutex);
++            mutex = NULL;
++        }
++    } else {
++        SDL_OutOfMemory();
++    }
++    return mutex;
++}
++
++/* Free the mutex */
++void
++SDL_DestroyMutex(SDL_mutex * mutex)
++{
++    if (mutex) {
++        if (mutex->sem) {
++            SDL_DestroySemaphore(mutex->sem);
++        }
++        SDL_free(mutex);
++    }
++}
++
++/* Lock the semaphore */
++int
++SDL_mutexP(SDL_mutex * mutex)
++{
++#if SDL_THREADS_DISABLED
++    return 0;
++#else
++    SDL_threadID this_thread;
++
++    if (mutex == NULL) {
++        return SDL_SetError("Passed a NULL mutex");
++    }
++
++    this_thread = SDL_ThreadID();
++    if (mutex->owner == this_thread) {
++        ++mutex->recursive;
++    } else {
++        /* The order of operations is important.
++           We set the locking thread id after we obtain the lock
++           so unlocks from other threads will fail.
++         */
++        SDL_SemWait(mutex->sem);
++        mutex->owner = this_thread;
++        mutex->recursive = 0;
++    }
++
++    return 0;
++#endif /* SDL_THREADS_DISABLED */
++}
++
++/* Unlock the mutex */
++int
++SDL_mutexV(SDL_mutex * mutex)
++{
++#if SDL_THREADS_DISABLED
++    return 0;
++#else
++    if (mutex == NULL) {
++        return SDL_SetError("Passed a NULL mutex");
++    }
++
++    /* If we don't own the mutex, we can't unlock it */
++    if (SDL_ThreadID() != mutex->owner) {
++        return SDL_SetError("mutex not owned by this thread");
++    }
++
++    if (mutex->recursive) {
++        --mutex->recursive;
++    } else {
++        /* The order of operations is important.
++           First reset the owner so another thread doesn't lock
++           the mutex and set the ownership before we reset it,
++           then release the lock semaphore.
++         */
++        mutex->owner = 0;
++        SDL_SemPost(mutex->sem);
++    }
++    return 0;
++#endif /* SDL_THREADS_DISABLED */
++}
++
++#endif /* SDL_THREAD_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/thread/vita/SDL_sysmutex_c.h b/src/thread/vita/SDL_sysmutex_c.h
+new file mode 100644
+index 000000000..7481b6656
+--- /dev/null
++++ b/src/thread/vita/SDL_sysmutex_c.h
+@@ -0,0 +1,22 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/thread/vita/SDL_syssem.c b/src/thread/vita/SDL_syssem.c
+new file mode 100644
+index 000000000..073ba096c
+--- /dev/null
++++ b/src/thread/vita/SDL_syssem.c
+@@ -0,0 +1,163 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_THREAD_VITA
++
++/* Semaphore functions for the VITA. */
++
++#include <stdio.h>
++#include <stdlib.h>
++
++#include "SDL_error.h"
++#include "SDL_thread.h"
++
++#include <psp2/types.h>
++#include <psp2/kernel/error.h>
++#include <psp2/kernel/threadmgr.h>
++
++struct SDL_semaphore {
++    SceUID  semid;
++};
++
++
++/* Create a semaphore */
++SDL_sem *SDL_CreateSemaphore(Uint32 initial_value)
++{
++    SDL_sem *sem;
++
++    sem = (SDL_sem *) malloc(sizeof(*sem));
++    if (sem != NULL) {
++        /* TODO: Figure out the limit on the maximum value. */
++        sem->semid = sceKernelCreateSema("SDL sema", 0, initial_value, 255, NULL);
++        if (sem->semid < 0) {
++            SDL_SetError("Couldn't create semaphore");
++            free(sem);
++            sem = NULL;
++        }
++    } else {
++        SDL_OutOfMemory();
++    }
++
++    return sem;
++}
++
++/* Free the semaphore */
++void SDL_DestroySemaphore(SDL_sem *sem)
++{
++    if (sem != NULL) {
++        if (sem->semid > 0) {
++            sceKernelDeleteSema(sem->semid);
++            sem->semid = 0;
++        }
++
++        free(sem);
++    }
++}
++
++/* TODO: This routine is a bit overloaded.
++ * If the timeout is 0 then just poll the semaphore; if it's SDL_MUTEX_MAXWAIT, pass
++ * NULL to sceKernelWaitSema() so that it waits indefinitely; and if the timeout
++ * is specified, convert it to microseconds. */
++int SDL_SemWaitTimeout(SDL_sem *sem, Uint32 timeout)
++{
++    Uint32 *pTimeout;
++       unsigned int res;
++
++    if (sem == NULL) {
++        SDL_SetError("Passed a NULL sem");
++        return 0;
++    }
++
++    if (timeout == 0) {
++        res = sceKernelPollSema(sem->semid, 1);
++        if (res < 0) {
++            return SDL_MUTEX_TIMEDOUT;
++        }
++        return 0;
++    }
++
++    if (timeout == SDL_MUTEX_MAXWAIT) {
++        pTimeout = NULL;
++    } else {
++        timeout *= 1000;  /* Convert to microseconds. */
++        pTimeout = &timeout;
++    }
++
++    res = sceKernelWaitSema(sem->semid, 1, pTimeout);
++       switch (res) {
++               case SCE_KERNEL_OK:
++                       return 0;
++               case SCE_KERNEL_ERROR_WAIT_TIMEOUT:
++                       return SDL_MUTEX_TIMEDOUT;
++               default:
++                       return SDL_SetError("WaitForSingleObject() failed");
++    }
++}
++
++int SDL_SemTryWait(SDL_sem *sem)
++{
++    return SDL_SemWaitTimeout(sem, 0);
++}
++
++int SDL_SemWait(SDL_sem *sem)
++{
++    return SDL_SemWaitTimeout(sem, SDL_MUTEX_MAXWAIT);
++}
++
++/* Returns the current count of the semaphore */
++Uint32 SDL_SemValue(SDL_sem *sem)
++{
++    SceKernelSemaInfo info;
++	info.size = sizeof(info);
++
++    if (sem == NULL) {
++        SDL_SetError("Passed a NULL sem");
++        return 0;
++    }
++
++    if (sceKernelGetSemaInfo(sem->semid, &info) >= 0) {
++        return info.currentCount;
++    }
++
++    return 0;
++}
++
++int SDL_SemPost(SDL_sem *sem)
++{
++    int res;
++
++    if (sem == NULL) {
++        return SDL_SetError("Passed a NULL sem");
++    }
++
++    res = sceKernelSignalSema(sem->semid, 1);
++    if (res < 0) {
++        return SDL_SetError("sceKernelSignalSema() failed");
++    }
++
++    return 0;
++}
++
++#endif /* SDL_THREAD_VITA */
++
++/* vim: ts=4 sw=4
++ */
+diff --git a/src/thread/vita/SDL_systhread.c b/src/thread/vita/SDL_systhread.c
+new file mode 100644
+index 000000000..d2375fd9c
+--- /dev/null
++++ b/src/thread/vita/SDL_systhread.c
+@@ -0,0 +1,112 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_THREAD_VITA
++
++/* VITA thread management routines for SDL */
++
++#include <stdio.h>
++#include <stdlib.h>
++
++#include "SDL_error.h"
++#include "SDL_thread.h"
++#include "../SDL_systhread.h"
++#include "../SDL_thread_c.h"
++#include <psp2/types.h>
++#include <psp2/kernel/threadmgr.h>
++
++
++static int ThreadEntry(SceSize args, void *argp)
++{
++    SDL_RunThread(*(void **) argp);
++    return 0;
++}
++
++int SDL_SYS_CreateThread(SDL_Thread *thread, void *args)
++{
++    SceKernelThreadInfo info;
++    int priority = 32;
++
++    /* Set priority of new thread to the same as the current thread */
++    info.size = sizeof(SceKernelThreadInfo);
++    if (sceKernelGetThreadInfo(sceKernelGetThreadId(), &info) == 0) {
++        priority = info.currentPriority;
++    }
++
++    thread->handle = sceKernelCreateThread("SDL thread", ThreadEntry,
++                           priority, 0x10000, 0, 0, NULL);
++
++    if (thread->handle < 0) {
++        return SDL_SetError("sceKernelCreateThread() failed");
++    }
++
++    sceKernelStartThread(thread->handle, 4, &args);
++    return 0;
++}
++
++void SDL_SYS_SetupThread(const char *name)
++{
++    /* Do nothing. */
++}
++
++SDL_threadID SDL_ThreadID(void)
++{
++    return (SDL_threadID) sceKernelGetThreadId();
++}
++
++void SDL_SYS_WaitThread(SDL_Thread *thread)
++{
++    sceKernelWaitThreadEnd(thread->handle, NULL, NULL);
++    sceKernelDeleteThread(thread->handle);
++}
++
++void SDL_SYS_DetachThread(SDL_Thread *thread)
++{
++    /* !!! FIXME: is this correct? */
++    sceKernelDeleteThread(thread->handle);
++}
++
++void SDL_SYS_KillThread(SDL_Thread *thread)
++{
++    sceKernelDeleteThread(thread->handle);
++}
++
++int SDL_SYS_SetThreadPriority(SDL_ThreadPriority priority)
++{
++    int value;
++
++    if (priority == SDL_THREAD_PRIORITY_LOW) {
++        value = 19;
++    } else if (priority == SDL_THREAD_PRIORITY_HIGH) {
++        value = -20;
++    } else {
++        value = 0;
++    }
++
++    return sceKernelChangeThreadPriority(sceKernelGetThreadId(),value);
++
++}
++
++#endif /* SDL_THREAD_VITA */
++
++/* vim: ts=4 sw=4
++ */
+diff --git a/src/thread/vita/SDL_systhread_c.h b/src/thread/vita/SDL_systhread_c.h
+new file mode 100644
+index 000000000..80bf49d17
+--- /dev/null
++++ b/src/thread/vita/SDL_systhread_c.h
+@@ -0,0 +1,24 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#include <psp2/types.h>
++
++typedef SceUID SYS_ThreadHandle;
+diff --git a/src/timer/vita/SDL_systimer.c b/src/timer/vita/SDL_systimer.c
+new file mode 100644
+index 000000000..adc7b852a
+--- /dev/null
++++ b/src/timer/vita/SDL_systimer.c
+@@ -0,0 +1,91 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#ifdef SDL_TIMERS_VITA
++
++#include "SDL_thread.h"
++#include "SDL_timer.h"
++#include "SDL_error.h"
++#include "../SDL_timer_c.h"
++#include <stdlib.h>
++#include <time.h>
++#include <sys/time.h>
++#include <psp2/kernel/processmgr.h>
++
++static uint64_t start;
++static SDL_bool ticks_started = SDL_FALSE;
++
++void
++SDL_TicksInit(void)
++{
++    if (ticks_started) {
++        return;
++    }
++    ticks_started = SDL_TRUE;
++
++    start = sceKernelGetProcessTimeWide();
++}
++
++void
++SDL_TicksQuit(void)
++{
++    ticks_started = SDL_FALSE;
++}
++
++Uint32 SDL_GetTicks(void)
++{
++    if (!ticks_started) {
++        SDL_TicksInit();
++    }
++
++    uint64_t now;
++    Uint32 ticks;
++
++    now = sceKernelGetProcessTimeWide();
++    ticks = (now - start)/1000;
++    return (ticks);
++}
++
++Uint64
++SDL_GetPerformanceCounter(void)
++{
++    return SDL_GetTicks();
++}
++
++Uint64
++SDL_GetPerformanceFrequency(void)
++{
++    return 1000;
++}
++
++void SDL_Delay(Uint32 ms)
++{
++    const Uint32 max_delay = 0xffffffffUL / 1000;
++    if(ms > max_delay)
++        ms = max_delay;
++    sceKernelDelayThreadCB(ms * 1000);
++}
++
++#endif /* SDL_TIMERS_VITA */
++
++/* vim: ts=4 sw=4
++ */
+diff --git a/src/video/SDL_sysvideo.h b/src/video/SDL_sysvideo.h
+index 38ed97157..ba757b015 100644
+--- a/src/video/SDL_sysvideo.h
++++ b/src/video/SDL_sysvideo.h
+@@ -421,6 +421,7 @@ extern VideoBootStrap PND_bootstrap;
+ extern VideoBootStrap UIKIT_bootstrap;
+ extern VideoBootStrap Android_bootstrap;
+ extern VideoBootStrap PSP_bootstrap;
++extern VideoBootStrap VITA_bootstrap;
+ extern VideoBootStrap RPI_bootstrap;
+ extern VideoBootStrap KMSDRM_bootstrap;
+ extern VideoBootStrap DUMMY_bootstrap;
+diff --git a/src/video/SDL_video.c b/src/video/SDL_video.c
+index de0bc1cbc..d5c8827af 100644
+--- a/src/video/SDL_video.c
++++ b/src/video/SDL_video.c
+@@ -94,6 +94,9 @@ static VideoBootStrap *bootstrap[] = {
+ #if SDL_VIDEO_DRIVER_PSP
+     &PSP_bootstrap,
+ #endif
++#if SDL_VIDEO_DRIVER_VITA
++    &VITA_bootstrap,
++#endif
+ #if SDL_VIDEO_DRIVER_KMSDRM
+     &KMSDRM_bootstrap,
+ #endif
+diff --git a/src/video/vita/SDL_vitagl.c b/src/video/vita/SDL_vitagl.c
+new file mode 100644
+index 000000000..831586c24
+--- /dev/null
++++ b/src/video/vita/SDL_vitagl.c
+@@ -0,0 +1,221 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_VITA
++
++#include <stdlib.h>
++#include <string.h>
++
++#include "SDL_error.h"
++#include "SDL_vitavideo.h"
++#include "SDL_vitagl_c.h"
++
++/*****************************************************************************/
++/* SDL OpenGL/OpenGL ES functions                                            */
++/*****************************************************************************/
++#define EGLCHK(stmt)                            \
++    do {                                        \
++        EGLint err;                             \
++                                                \
++        stmt;                                   \
++        err = eglGetError();                    \
++        if (err != EGL_SUCCESS) {               \
++            SDL_SetError("EGL error %d", err);  \
++            return 0;                           \
++        }                                       \
++    } while (0)
++
++int
++VITA_GL_LoadLibrary(_THIS, const char *path)
++{
++  pibInit(PIB_SHACCCG);
++  return 0;
++}
++
++void *
++VITA_GL_GetProcAddress(_THIS, const char *proc)
++{
++        return eglGetProcAddress(proc);
++}
++
++void
++VITA_GL_UnloadLibrary(_THIS)
++{
++        eglTerminate(_this->gl_data->display);
++}
++
++static EGLint width = 960;
++static EGLint height = 544;
++
++SDL_GLContext
++VITA_GL_CreateContext(_THIS, SDL_Window * window)
++{
++
++    SDL_WindowData *wdata = (SDL_WindowData *) window->driverdata;
++
++        EGLint attribs[32];
++        EGLDisplay display;
++        EGLContext context;
++        EGLSurface surface;
++        EGLConfig config;
++        EGLint num_configs;
++        int i;
++
++
++    /* EGL init taken from glutCreateWindow() in VITAGL's glut.c. */
++        EGLCHK(display = eglGetDisplay(0));
++
++        EGLCHK(eglInitialize(display, NULL, NULL));
++        wdata->uses_gles = SDL_TRUE;
++        window->flags |= SDL_WINDOW_FULLSCREEN;
++
++        EGLCHK(eglBindAPI(EGL_OPENGL_ES_API));
++
++        /* Setup the config based on SDL's current values. */
++        i = 0;
++        attribs[i++] = EGL_RED_SIZE;
++        attribs[i++] = 8;//_this->gl_config.red_size;
++        attribs[i++] = EGL_GREEN_SIZE;
++        attribs[i++] = 8;//_this->gl_config.green_size;
++        attribs[i++] = EGL_BLUE_SIZE;
++        attribs[i++] = 8;//_this->gl_config.blue_size;
++        attribs[i++] = EGL_DEPTH_SIZE;
++        attribs[i++] = 32;//_this->gl_config.depth_size;
++
++//        if (_this->gl_config.alpha_size)
++        {
++            attribs[i++] = EGL_ALPHA_SIZE;
++            attribs[i++] = 8;//_this->gl_config.alpha_size;
++        }
++        if (_this->gl_config.stencil_size)
++        {
++            attribs[i++] = EGL_STENCIL_SIZE;
++            attribs[i++] = _this->gl_config.stencil_size;
++        }
++
++        attribs[i++] = EGL_SURFACE_TYPE;
++        attribs[i++] = 5;
++
++        attribs[i++] = EGL_RENDERABLE_TYPE;
++        attribs[i++] = EGL_OPENGL_ES2_BIT;
++
++        attribs[i++] = EGL_NONE;
++
++        EGLCHK(eglChooseConfig(display, attribs, &config, 1, &num_configs));
++
++        if (num_configs == 0)
++        {
++            SDL_SetError("No valid EGL configs for requested mode");
++            return 0;
++        }
++
++        const EGLint contextAttribs[] = {
++            EGL_CONTEXT_CLIENT_VERSION, 2,
++            EGL_NONE
++        };
++
++        EGLCHK(surface = eglCreateWindowSurface(display, config, VITA_WINDOW_960X544, NULL));
++
++        EGLCHK(context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs));
++
++        EGLCHK(eglMakeCurrent(display, surface, surface, context));
++
++        EGLCHK(eglQuerySurface(display, surface, EGL_WIDTH, &width));
++        EGLCHK(eglQuerySurface(display, surface, EGL_HEIGHT, &height));
++
++        _this->gl_data->display = display;
++        _this->gl_data->context = context;
++        _this->gl_data->surface = surface;
++
++
++    return context;
++}
++
++int
++VITA_GL_MakeCurrent(_THIS, SDL_Window * window, SDL_GLContext context)
++{
++        if (!eglMakeCurrent(_this->gl_data->display, _this->gl_data->surface,
++                          _this->gl_data->surface, _this->gl_data->context))
++        {
++            return SDL_SetError("Unable to make EGL context current");
++        }
++    return 0;
++}
++
++int
++VITA_GL_SetSwapInterval(_THIS, int interval)
++{
++    EGLBoolean status;
++    status = eglSwapInterval(_this->gl_data->display, interval);
++    if (status == EGL_TRUE) {
++        /* Return success to upper level */
++        _this->gl_data->swapinterval = interval;
++        return 0;
++    }
++    /* Failed to set swap interval */
++    return SDL_SetError("Unable to set the EGL swap interval");
++}
++
++int
++VITA_GL_GetSwapInterval(_THIS)
++{
++    return _this->gl_data->swapinterval;
++}
++
++int
++VITA_GL_SwapWindow(_THIS, SDL_Window * window)
++{
++    if (!eglSwapBuffers(_this->gl_data->display, _this->gl_data->surface)) {
++        return SDL_SetError("eglSwapBuffers() failed");
++    }
++    return 0;
++}
++
++void
++VITA_GL_DeleteContext(_THIS, SDL_GLContext context)
++{
++    SDL_VideoData *phdata = (SDL_VideoData *) _this->driverdata;
++    EGLBoolean status;
++
++    if (phdata->egl_initialized != SDL_TRUE) {
++        SDL_SetError("VITA: GLES initialization failed, no OpenGL ES support");
++        return;
++    }
++
++    /* Check if OpenGL ES connection has been initialized */
++    if (_this->gl_data->display != EGL_NO_DISPLAY) {
++        if (context != EGL_NO_CONTEXT) {
++            status = eglDestroyContext(_this->gl_data->display, context);
++            if (status != EGL_TRUE) {
++                /* Error during OpenGL ES context destroying */
++                SDL_SetError("VITA: OpenGL ES context destroy error");
++                return;
++            }
++        }
++    }
++
++    return;
++}
++
++#endif /* SDL_VIDEO_DRIVER_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitagl_c.h b/src/video/vita/SDL_vitagl_c.h
+new file mode 100644
+index 000000000..61d44e412
+--- /dev/null
++++ b/src/video/vita/SDL_vitagl_c.h
+@@ -0,0 +1,56 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef SDL_vitagl_c_h_
++#define SDL_vitagl_c_h_
++
++
++#include <pib.h>
++#include <EGL/egl.h>
++#include <GLES2/gl2.h>
++#include <GLES2/gl2ext.h>
++
++#include "SDL_vitavideo.h"
++
++
++typedef struct SDL_GLDriverData {
++        EGLDisplay display;
++        EGLContext context;
++        EGLSurface surface;
++    uint32_t swapinterval;
++}SDL_GLDriverData;
++
++extern void * VITA_GL_GetProcAddress(_THIS, const char *proc);
++extern int VITA_GL_MakeCurrent(_THIS,SDL_Window * window, SDL_GLContext context);
++extern void VITA_GL_SwapBuffers(_THIS);
++
++extern int VITA_GL_SwapWindow(_THIS, SDL_Window * window);
++extern SDL_GLContext VITA_GL_CreateContext(_THIS, SDL_Window * window);
++
++extern int VITA_GL_LoadLibrary(_THIS, const char *path);
++extern void VITA_GL_UnloadLibrary(_THIS);
++extern int VITA_GL_SetSwapInterval(_THIS, int interval);
++extern int VITA_GL_GetSwapInterval(_THIS);
++
++
++#endif /* SDL_vitagl_c_h_ */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitakeyboard.c b/src/video/vita/SDL_vitakeyboard.c
+new file mode 100644
+index 000000000..efa407f03
+--- /dev/null
++++ b/src/video/vita/SDL_vitakeyboard.c
+@@ -0,0 +1,198 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_VITA
++
++#include <psp2/kernel/processmgr.h>
++#include <psp2/ctrl.h>
++#include <psp2/hid.h>
++
++#include "SDL_events.h"
++#include "SDL_log.h"
++#include "SDL_vitavideo.h"
++#include "SDL_vitakeyboard.h"
++#include "../../events/SDL_keyboard_c.h"
++
++SceHidKeyboardReport k_reports[SCE_HID_MAX_REPORT];
++int keyboard_hid_handle = 0;
++Uint8 prev_keys[6] = {0};
++Uint8 prev_modifiers = 0;
++Uint8 locks = 0;
++Uint8 lock_key_down = 0;
++
++void 
++VITA_InitKeyboard(void)
++{
++	sceHidKeyboardEnumerate(&keyboard_hid_handle, 1);
++}
++
++void 
++VITA_PollKeyboard(void)
++{
++	// We skip polling keyboard if no window is created
++	if (Vita_Window == NULL)
++		return;
++
++	if (keyboard_hid_handle > 0)
++	{
++		int numReports = sceHidKeyboardRead(keyboard_hid_handle, (SceHidKeyboardReport**)&k_reports, SCE_HID_MAX_REPORT);
++
++		if (numReports < 0) {
++			keyboard_hid_handle = 0;
++		}
++		else if (numReports) {
++			// Numlock and Capslock state changes only on a SDL_PRESSED event
++			// The k_report only reports the state of the LED
++			if (k_reports[numReports - 1].modifiers[1] & 0x1) {
++				if (!(locks & 0x1)) {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_NUMLOCKCLEAR);
++					locks |= 0x1;
++				}
++			}
++			else {
++				if (locks & 0x1) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_NUMLOCKCLEAR);
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_NUMLOCKCLEAR);
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_NUMLOCKCLEAR);
++					locks &= ~0x1;
++				}
++			}
++
++			if (k_reports[numReports - 1].modifiers[1] & 0x2) {
++				if (!(locks & 0x2)) {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_CAPSLOCK);
++					locks |= 0x2;
++				}
++			}
++			else {
++				if (locks & 0x2) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_CAPSLOCK);
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_CAPSLOCK);
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_CAPSLOCK);
++					locks &= ~0x2;
++				}
++			}
++
++			if (k_reports[numReports - 1].modifiers[1] & 0x4) {
++				if (!(locks & 0x4)) {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_SCROLLLOCK);
++					locks |= 0x4;
++				}
++			}
++			else {
++				if (locks & 0x4) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_SCROLLLOCK);
++					locks &= ~0x4;
++				}
++			}
++
++			Uint8 changed_modifiers = k_reports[numReports - 1].modifiers[0] ^ prev_modifiers;
++
++			if (changed_modifiers & 0x01) {
++				if (prev_modifiers & 0x01) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LCTRL);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_LCTRL);
++				}
++			}
++			if (changed_modifiers & 0x02) {
++				if (prev_modifiers & 0x02) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LSHIFT);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_LSHIFT);
++				}
++			}
++			if (changed_modifiers & 0x04) {
++				if (prev_modifiers & 0x04) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LALT);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_LALT);
++				}
++			}
++			if (changed_modifiers & 0x08) {
++				if (prev_modifiers & 0x08) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LGUI);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_LGUI);
++				}
++			}
++			if (changed_modifiers & 0x10) {
++				if (prev_modifiers & 0x10) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RCTRL);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_RCTRL);
++				}
++			}
++			if (changed_modifiers & 0x20) {
++				if (prev_modifiers & 0x20) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RSHIFT);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_RSHIFT);
++				}
++			}
++			if (changed_modifiers & 0x40) {
++				if (prev_modifiers & 0x40) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RALT);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_RALT);
++				}
++			}
++			if (changed_modifiers & 0x80) {
++				if (prev_modifiers & 0x80) {
++					SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RGUI);
++				}
++				else {
++					SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_RGUI);
++				}
++			}
++
++			prev_modifiers = k_reports[numReports - 1].modifiers[0];
++
++			for (int i = 0; i < 6; i++) {
++
++				int keyCode = k_reports[numReports - 1].keycodes[i];
++
++				if (keyCode != prev_keys[i]) {
++
++					if (prev_keys[i]) {
++						SDL_SendKeyboardKey(SDL_RELEASED, prev_keys[i]);
++					}
++					if (keyCode) {
++						SDL_SendKeyboardKey(SDL_PRESSED, keyCode);
++					}
++					prev_keys[i] = keyCode;
++				}
++			}
++		}
++	}
++}
++
++#endif /* SDL_VIDEO_DRIVER_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitakeyboard.h b/src/video/vita/SDL_vitakeyboard.h
+new file mode 100644
+index 000000000..b0ff5ffde
+--- /dev/null
++++ b/src/video/vita/SDL_vitakeyboard.h
+@@ -0,0 +1,33 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef _SDL_vitakeyboard_h
++#define _SDL_vitakeyboard_h
++
++#include "../../SDL_internal.h"
++
++/* Keyboard functions */
++extern void VITA_InitKeyboard(void);
++extern void VITA_PollKeyboard(void);
++
++#endif /* _SDL_vitakeyboard_h */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitamouse.c b/src/video/vita/SDL_vitamouse.c
+new file mode 100644
+index 000000000..d5af6bf23
+--- /dev/null
++++ b/src/video/vita/SDL_vitamouse.c
+@@ -0,0 +1,94 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_VITA
++
++#include <psp2/kernel/processmgr.h>
++#include <psp2/ctrl.h>
++#include <psp2/hid.h>
++
++#include "SDL_events.h"
++#include "SDL_log.h"
++#include "SDL_mouse.h"
++#include "SDL_vitavideo.h"
++#include "SDL_vitamouse_c.h"
++#include "../../events/SDL_mouse_c.h"
++
++SceHidMouseReport m_reports[SCE_HID_MAX_REPORT];
++int mouse_hid_handle = 0;
++Uint8 prev_buttons = 0;
++
++void 
++VITA_InitMouse(void)
++{
++	sceHidMouseEnumerate(&mouse_hid_handle, 1);
++}
++
++void 
++VITA_PollMouse(void)
++{
++	// We skip polling mouse if no window is created
++	if (Vita_Window == NULL)
++		return;
++
++	if (mouse_hid_handle > 0)
++	{
++		int numReports = sceHidMouseRead(mouse_hid_handle, (SceHidMouseReport**)&m_reports, SCE_HID_MAX_REPORT);
++		if (numReports > 0)
++		{	
++			for (int i = 0; i <= numReports - 1; i++)
++			{
++				Uint8 changed_buttons = m_reports[i].buttons ^ prev_buttons;
++
++				if (changed_buttons & 0x1) {
++					if (prev_buttons & 0x1)
++						SDL_SendMouseButton(Vita_Window, 0, SDL_RELEASED, SDL_BUTTON_LEFT);
++					else
++						SDL_SendMouseButton(Vita_Window, 0, SDL_PRESSED, SDL_BUTTON_LEFT);
++				}
++				if (changed_buttons & 0x2) {
++					if (prev_buttons & 0x2)
++						SDL_SendMouseButton(Vita_Window, 0, SDL_RELEASED, SDL_BUTTON_RIGHT);
++					else
++						SDL_SendMouseButton(Vita_Window, 0, SDL_PRESSED, SDL_BUTTON_RIGHT);
++				}
++				if (changed_buttons & 0x4) {
++					if (prev_buttons & 0x4)
++						SDL_SendMouseButton(Vita_Window, 0, SDL_RELEASED, SDL_BUTTON_MIDDLE);
++					else
++						SDL_SendMouseButton(Vita_Window, 0, SDL_PRESSED, SDL_BUTTON_MIDDLE);
++				}
++
++				prev_buttons = m_reports[i].buttons;
++
++				if (m_reports[i].rel_x || m_reports[i].rel_y)
++				{
++					SDL_SendMouseMotion(Vita_Window, 0, 1, m_reports[i].rel_x, m_reports[i].rel_y);
++				}
++			}
++		}
++	}
++}
++
++#endif /* SDL_VIDEO_DRIVER_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitamouse_c.h b/src/video/vita/SDL_vitamouse_c.h
+new file mode 100644
+index 000000000..ea8648c17
+--- /dev/null
++++ b/src/video/vita/SDL_vitamouse_c.h
+@@ -0,0 +1,33 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef _SDL_vitamouse_h
++#define _SDL_vitamouse_h
++
++#include "../../SDL_internal.h"
++
++/* mouse functions */
++extern void VITA_InitMouse(void);
++extern void VITA_PollMouse(void);
++
++#endif /* _SDL_vitamouse_h */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitatouch.c b/src/video/vita/SDL_vitatouch.c
+new file mode 100644
+index 000000000..f101d35ea
+--- /dev/null
++++ b/src/video/vita/SDL_vitatouch.c
+@@ -0,0 +1,179 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_VITA
++
++#include <psp2/kernel/processmgr.h>
++#include <psp2/touch.h>
++
++#include "SDL_events.h"
++#include "SDL_log.h"
++#include "SDL_vitavideo.h"
++#include "SDL_vitatouch.h"
++#include "../../events/SDL_mouse_c.h"
++#include "../../events/SDL_touch_c.h"
++
++SceTouchData touch_old[SCE_TOUCH_PORT_MAX_NUM];
++SceTouchData touch[SCE_TOUCH_PORT_MAX_NUM];
++
++SceTouchPanelInfo panelinfo[SCE_TOUCH_PORT_MAX_NUM];
++
++float aAWidth[SCE_TOUCH_PORT_MAX_NUM];
++float aAHeight[SCE_TOUCH_PORT_MAX_NUM];
++float dispWidth[SCE_TOUCH_PORT_MAX_NUM];
++float dispHeight[SCE_TOUCH_PORT_MAX_NUM];
++float forcerange[SCE_TOUCH_PORT_MAX_NUM];
++
++void 
++VITA_InitTouch(void)
++{
++	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
++	sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
++	sceTouchEnableTouchForce(SCE_TOUCH_PORT_FRONT);
++	sceTouchEnableTouchForce(SCE_TOUCH_PORT_BACK);
++
++	SceTouchPanelInfo panelinfo[SCE_TOUCH_PORT_MAX_NUM];
++	for(int port = 0; port < SCE_TOUCH_PORT_MAX_NUM; port++) {
++		sceTouchGetPanelInfo(port, &panelinfo[port]);
++		aAWidth[port] = (float)(panelinfo[port].maxAaX - panelinfo[port].minAaX);
++		aAHeight[port] = (float)(panelinfo[port].maxAaY - panelinfo[port].minAaY);
++		dispWidth[port] = (float)(panelinfo[port].maxDispX - panelinfo[port].minDispX);
++		dispHeight[port] = (float)(panelinfo[port].maxDispY - panelinfo[port].minDispY);
++		forcerange[port] = (float)(panelinfo[port].maxForce - panelinfo[port].minForce);
++	}
++
++	// Support passing both front and back touch devices in events
++	SDL_AddTouch((SDL_TouchID)0, SDL_TOUCH_DEVICE_DIRECT, "Front");
++	SDL_AddTouch((SDL_TouchID)1, SDL_TOUCH_DEVICE_DIRECT,  "Back");
++}
++
++void 
++VITA_QuitTouch(void){
++	sceTouchDisableTouchForce(SCE_TOUCH_PORT_FRONT);
++	sceTouchDisableTouchForce(SCE_TOUCH_PORT_BACK);
++}
++
++void 
++VITA_PollTouch(void)
++{
++	// We skip polling touch if no window is created
++	if (Vita_Window == NULL)
++		return;
++
++	SDL_FingerID finger_id = 0;
++	int port;
++
++	memcpy(touch_old, touch, sizeof(touch_old));
++
++	for(port = 0; port < SCE_TOUCH_PORT_MAX_NUM; port++) {
++		sceTouchPeek(port, &touch[port], 1);
++		if (touch[port].reportNum > 0) {
++			for (int i = 0; i < touch[port].reportNum; i++)
++			{
++				// adjust coordinates and forces to return normalized values
++				// for the front, screen area is used as a reference (for direct touch)
++				// e.g. touch_x = 1.0 corresponds to screen_x = 960
++				// for the back panel, the active touch area is used as reference
++				float x = 0;
++				float y = 0;
++				VITA_ConvertTouchXYToSDLXY(&x, &y, touch[port].report[i].x, touch[port].report[i].y, port);
++				float force = (touch[port].report[i].force - panelinfo[port].minForce) / forcerange[port];
++				finger_id = (SDL_FingerID) touch[port].report[i].id;
++
++				// Send an initial touch
++				SDL_SendTouch((SDL_TouchID)port,
++					finger_id,
++					Vita_Window,
++					SDL_TRUE,
++					x,
++					y,
++					force);
++
++				// Always send the motion
++				SDL_SendTouchMotion((SDL_TouchID)port,
++					finger_id,
++					Vita_Window,
++					x,
++					y,
++					force);
++			}
++		}
++
++		// some fingers might have been let go
++		if (touch_old[port].reportNum > 0) {
++			for (int i = 0; i < touch_old[port].reportNum; i++) {
++				int finger_up = 1;
++				if (touch[port].reportNum > 0) {
++					for (int j = 0; j < touch[port].reportNum; j++) {
++						if (touch[port].report[j].id == touch_old[port].report[i].id ) {
++							finger_up = 0;
++						}
++					}
++				}
++				if (finger_up == 1) {
++					float x = 0;
++					float y = 0;
++					VITA_ConvertTouchXYToSDLXY(&x, &y, touch_old[port].report[i].x, touch_old[port].report[i].y, port);
++					float force = (touch_old[port].report[i].force - panelinfo[port].minForce) / forcerange[port];
++					finger_id = (SDL_FingerID) touch_old[port].report[i].id;
++					// Finger released from screen
++					SDL_SendTouch((SDL_TouchID)port,
++						finger_id,
++						Vita_Window,
++						SDL_FALSE,
++						x,
++						y,
++						force);
++				}
++			}
++		}
++	}
++}
++
++void VITA_ConvertTouchXYToSDLXY(float *sdl_x, float *sdl_y, int vita_x, int vita_y, int port) {
++	float x = 0;
++	float y = 0;
++	if (port == SCE_TOUCH_PORT_FRONT) {
++		x = (vita_x - panelinfo[port].minDispX) / dispWidth[port];
++		y = (vita_y - panelinfo[port].minDispY) / dispHeight[port];
++	} else {
++		x = (vita_x - panelinfo[port].minAaX) / aAWidth[port];
++		y = (vita_y - panelinfo[port].minAaY) / aAHeight[port];				
++	}
++	if (x < 0.0) {
++		x = 0.0;
++	} else if (x > 1.0) {
++		x = 1.0;
++	}
++	if (y < 0.0) {
++		y = 0.0;
++	} else if (y > 1.0) {
++		y = 1.0;
++	}
++	*sdl_x = x;
++	*sdl_y = y;
++}
++
++
++#endif /* SDL_VIDEO_DRIVER_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitatouch.h b/src/video/vita/SDL_vitatouch.h
+new file mode 100644
+index 000000000..1de0dea08
+--- /dev/null
++++ b/src/video/vita/SDL_vitatouch.h
+@@ -0,0 +1,35 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef _SDL_vitatouch_h
++#define _SDL_vitatouch_h
++
++#include "../../SDL_internal.h"
++
++/* Touch functions */
++extern void VITA_InitTouch(void);
++extern void VITA_QuitTouch(void);
++extern void VITA_PollTouch(void);
++void VITA_ConvertTouchXYToSDLXY(float *sdl_x, float *sdl_y, int vita_x, int vita_y, int port);
++
++#endif /* _SDL_vitatouch_h */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitavideo.c b/src/video/vita/SDL_vitavideo.c
+new file mode 100644
+index 000000000..5ff813e65
+--- /dev/null
++++ b/src/video/vita/SDL_vitavideo.c
+@@ -0,0 +1,341 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_VITA
++
++/* SDL internals */
++#include "../SDL_sysvideo.h"
++#include "SDL_version.h"
++#include "SDL_syswm.h"
++#include "SDL_loadso.h"
++#include "SDL_events.h"
++#include "../../events/SDL_mouse_c.h"
++#include "../../events/SDL_keyboard_c.h"
++
++/* VITA declarations */
++#include "SDL_vitavideo.h"
++#include "SDL_vitatouch.h"
++#include "SDL_vitakeyboard.h"
++#include "SDL_vitamouse_c.h"
++#include "SDL_vitagl_c.h"
++
++SDL_Window *Vita_Window;
++
++/* unused
++static SDL_bool VITA_initialized = SDL_FALSE;
++*/
++static int
++VITA_Available(void)
++{
++    return 1;
++}
++
++static void
++VITA_Destroy(SDL_VideoDevice * device)
++{
++/*    SDL_VideoData *phdata = (SDL_VideoData *) device->driverdata; */
++
++    if (device->driverdata != NULL) {
++        device->driverdata = NULL;
++    }
++}
++
++static SDL_VideoDevice *
++VITA_Create()
++{
++    SDL_VideoDevice *device;
++    SDL_VideoData *phdata;
++    SDL_GLDriverData *gldata;
++
++    int status;
++
++    /* Check if VITA could be initialized */
++    status = VITA_Available();
++    if (status == 0) {
++        /* VITA could not be used */
++        return NULL;
++    }
++
++    /* Initialize SDL_VideoDevice structure */
++    device = (SDL_VideoDevice *) SDL_calloc(1, sizeof(SDL_VideoDevice));
++    if (device == NULL) {
++        SDL_OutOfMemory();
++        return NULL;
++    }
++
++    /* Initialize internal VITA specific data */
++    phdata = (SDL_VideoData *) SDL_calloc(1, sizeof(SDL_VideoData));
++    if (phdata == NULL) {
++        SDL_OutOfMemory();
++        SDL_free(device);
++        return NULL;
++    }
++
++    gldata = (SDL_GLDriverData *) SDL_calloc(1, sizeof(SDL_GLDriverData));
++    if (gldata == NULL) {
++        SDL_OutOfMemory();
++        SDL_free(device);
++        SDL_free(phdata);
++        return NULL;
++    }
++    device->gl_data = gldata;
++    phdata->egl_initialized = SDL_TRUE;
++
++    device->driverdata = phdata;
++
++    /* Setup amount of available displays and current display */
++    device->num_displays = 0;
++
++    /* Set device free function */
++    device->free = VITA_Destroy;
++
++    /* Setup all functions which we can handle */
++    device->VideoInit = VITA_VideoInit;
++    device->VideoQuit = VITA_VideoQuit;
++    device->GetDisplayModes = VITA_GetDisplayModes;
++    device->SetDisplayMode = VITA_SetDisplayMode;
++    device->CreateSDLWindow = VITA_CreateWindow;
++    device->CreateSDLWindowFrom = VITA_CreateWindowFrom;
++    device->SetWindowTitle = VITA_SetWindowTitle;
++    device->SetWindowIcon = VITA_SetWindowIcon;
++    device->SetWindowPosition = VITA_SetWindowPosition;
++    device->SetWindowSize = VITA_SetWindowSize;
++    device->ShowWindow = VITA_ShowWindow;
++    device->HideWindow = VITA_HideWindow;
++    device->RaiseWindow = VITA_RaiseWindow;
++    device->MaximizeWindow = VITA_MaximizeWindow;
++    device->MinimizeWindow = VITA_MinimizeWindow;
++    device->RestoreWindow = VITA_RestoreWindow;
++    device->SetWindowGrab = VITA_SetWindowGrab;
++    device->DestroyWindow = VITA_DestroyWindow;
++    device->GetWindowWMInfo = VITA_GetWindowWMInfo;
++
++    device->GL_LoadLibrary = VITA_GL_LoadLibrary;
++    device->GL_GetProcAddress = VITA_GL_GetProcAddress;
++    device->GL_UnloadLibrary = VITA_GL_UnloadLibrary;
++    device->GL_CreateContext = VITA_GL_CreateContext;
++    device->GL_MakeCurrent = VITA_GL_MakeCurrent;
++    device->GL_SetSwapInterval = VITA_GL_SetSwapInterval;
++    device->GL_GetSwapInterval = VITA_GL_GetSwapInterval;
++    device->GL_SwapWindow = VITA_GL_SwapWindow;
++    device->GL_DeleteContext = VITA_GL_DeleteContext;
++
++    device->HasScreenKeyboardSupport = VITA_HasScreenKeyboardSupport;
++    device->ShowScreenKeyboard = VITA_ShowScreenKeyboard;
++    device->HideScreenKeyboard = VITA_HideScreenKeyboard;
++    device->IsScreenKeyboardShown = VITA_IsScreenKeyboardShown;
++
++    device->PumpEvents = VITA_PumpEvents;
++
++    return device;
++}
++
++VideoBootStrap VITA_bootstrap = {
++    "VITA",
++    "VITA Video Driver",
++    VITA_Available,
++    VITA_Create
++};
++
++/*****************************************************************************/
++/* SDL Video and Display initialization/handling functions                   */
++/*****************************************************************************/
++int
++VITA_VideoInit(_THIS)
++{
++    SDL_VideoDisplay display;
++    SDL_DisplayMode current_mode;
++
++    SDL_zero(current_mode);
++
++    current_mode.w = 960;
++    current_mode.h = 544;
++
++    current_mode.refresh_rate = 60;
++    /* 32 bpp for default */
++    current_mode.format = SDL_PIXELFORMAT_ABGR8888;
++
++    current_mode.driverdata = NULL;
++
++    SDL_zero(display);
++    display.desktop_mode = current_mode;
++    display.current_mode = current_mode;
++    display.driverdata = NULL;
++
++    SDL_AddVideoDisplay(&display);
++    VITA_InitTouch();
++    VITA_InitKeyboard();
++    VITA_InitMouse();
++
++    return 1;
++}
++
++void
++VITA_VideoQuit(_THIS)
++{
++    VITA_QuitTouch();
++}
++
++void
++VITA_GetDisplayModes(_THIS, SDL_VideoDisplay * display)
++{
++
++}
++
++int
++VITA_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
++{
++    return 0;
++}
++
++int
++VITA_CreateWindow(_THIS, SDL_Window * window)
++{
++    SDL_WindowData *wdata;
++
++    /* Allocate window internal data */
++    wdata = (SDL_WindowData *) SDL_calloc(1, sizeof(SDL_WindowData));
++    if (wdata == NULL) {
++        return SDL_OutOfMemory();
++    }
++
++    /* Setup driver data for this window */
++    window->driverdata = wdata;
++
++    // Vita can only have one window
++    if (Vita_Window != NULL)
++    {
++        // Replace this with something else
++        return SDL_OutOfMemory();
++    }
++
++    Vita_Window = window;
++
++    // fix input, we need to find a better way
++    SDL_SetKeyboardFocus(window);
++
++    /* Window has been successfully created */
++    return 0;
++}
++
++int
++VITA_CreateWindowFrom(_THIS, SDL_Window * window, const void *data)
++{
++    return -1;
++}
++
++void
++VITA_SetWindowTitle(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_SetWindowIcon(_THIS, SDL_Window * window, SDL_Surface * icon)
++{
++}
++void
++VITA_SetWindowPosition(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_SetWindowSize(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_ShowWindow(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_HideWindow(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_RaiseWindow(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_MaximizeWindow(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_MinimizeWindow(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_RestoreWindow(_THIS, SDL_Window * window)
++{
++}
++void
++VITA_SetWindowGrab(_THIS, SDL_Window * window, SDL_bool grabbed)
++{
++
++}
++void
++VITA_DestroyWindow(_THIS, SDL_Window * window)
++{
++}
++
++/*****************************************************************************/
++/* SDL Window Manager function                                               */
++/*****************************************************************************/
++SDL_bool
++VITA_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info)
++{
++    if (info->version.major <= SDL_MAJOR_VERSION) {
++        return SDL_TRUE;
++    } else {
++        SDL_SetError("application not compiled with SDL %d.%d\n",
++                     SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
++        return SDL_FALSE;
++    }
++
++    /* Failed to get window manager information */
++    return SDL_FALSE;
++}
++
++
++/* TO Write Me */
++SDL_bool VITA_HasScreenKeyboardSupport(_THIS)
++{
++    return SDL_FALSE;
++}
++void VITA_ShowScreenKeyboard(_THIS, SDL_Window *window)
++{
++}
++void VITA_HideScreenKeyboard(_THIS, SDL_Window *window)
++{
++}
++SDL_bool VITA_IsScreenKeyboardShown(_THIS, SDL_Window *window)
++{
++    return SDL_FALSE;
++}
++
++void VITA_PumpEvents(_THIS)
++{
++    VITA_PollTouch();
++    VITA_PollKeyboard();
++	VITA_PollMouse();
++}
++
++#endif /* SDL_VIDEO_DRIVER_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/vita/SDL_vitavideo.h b/src/video/vita/SDL_vitavideo.h
+new file mode 100644
+index 000000000..1902ec6d1
+--- /dev/null
++++ b/src/video/vita/SDL_vitavideo.h
+@@ -0,0 +1,102 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#ifndef _SDL_vitavideo_h
++#define _SDL_vitavideo_h
++
++#include "../../SDL_internal.h"
++#include "../SDL_sysvideo.h"
++
++typedef struct SDL_VideoData
++{
++	SDL_bool egl_initialized;   /* OpenGL device initialization status */
++	uint32_t egl_refcount;      /* OpenGL reference count              */
++
++} SDL_VideoData;
++
++
++typedef struct SDL_DisplayData
++{
++
++} SDL_DisplayData;
++
++
++typedef struct SDL_WindowData
++{
++    SDL_bool uses_gles;
++
++} SDL_WindowData;
++
++extern SDL_Window * Vita_Window;
++
++
++/****************************************************************************/
++/* SDL_VideoDevice functions declaration                                    */
++/****************************************************************************/
++
++/* Display and window functions */
++int VITA_VideoInit(_THIS);
++void VITA_VideoQuit(_THIS);
++void VITA_GetDisplayModes(_THIS, SDL_VideoDisplay * display);
++int VITA_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
++int VITA_CreateWindow(_THIS, SDL_Window * window);
++int VITA_CreateWindowFrom(_THIS, SDL_Window * window, const void *data);
++void VITA_SetWindowTitle(_THIS, SDL_Window * window);
++void VITA_SetWindowIcon(_THIS, SDL_Window * window, SDL_Surface * icon);
++void VITA_SetWindowPosition(_THIS, SDL_Window * window);
++void VITA_SetWindowSize(_THIS, SDL_Window * window);
++void VITA_ShowWindow(_THIS, SDL_Window * window);
++void VITA_HideWindow(_THIS, SDL_Window * window);
++void VITA_RaiseWindow(_THIS, SDL_Window * window);
++void VITA_MaximizeWindow(_THIS, SDL_Window * window);
++void VITA_MinimizeWindow(_THIS, SDL_Window * window);
++void VITA_RestoreWindow(_THIS, SDL_Window * window);
++void VITA_SetWindowGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
++void VITA_DestroyWindow(_THIS, SDL_Window * window);
++
++/* Window manager function */
++SDL_bool VITA_GetWindowWMInfo(_THIS, SDL_Window * window,
++                             struct SDL_SysWMinfo *info);
++
++#if SDL_VIDEO_DRIVER_VITA
++/* OpenGL functions */
++int VITA_GL_LoadLibrary(_THIS, const char *path);
++void *VITA_GL_GetProcAddress(_THIS, const char *proc);
++void VITA_GL_UnloadLibrary(_THIS);
++SDL_GLContext VITA_GL_CreateContext(_THIS, SDL_Window * window);
++int VITA_GL_MakeCurrent(_THIS, SDL_Window * window, SDL_GLContext context);
++int VITA_GL_SetSwapInterval(_THIS, int interval);
++int VITA_GL_GetSwapInterval(_THIS);
++int VITA_GL_SwapWindow(_THIS, SDL_Window * window);
++void VITA_GL_DeleteContext(_THIS, SDL_GLContext context);
++#endif
++
++/* VITA on screen keyboard */
++SDL_bool VITA_HasScreenKeyboardSupport(_THIS);
++void VITA_ShowScreenKeyboard(_THIS, SDL_Window *window);
++void VITA_HideScreenKeyboard(_THIS, SDL_Window *window);
++SDL_bool VITA_IsScreenKeyboardShown(_THIS, SDL_Window *window);
++
++void VITA_PumpEvents(_THIS);
++
++#endif /* _SDL_pspvideo_h */
++
++/* vi: set ts=4 sw=4 expandtab: */
