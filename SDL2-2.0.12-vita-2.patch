@@ -1,6 +1,6 @@
 diff --git a/Makefile.vita.gles2.dolce b/Makefile.vita.gles2.dolce
 new file mode 100644
-index 000000000..7573cf471
+index 000000000..7ad460cfe
 --- /dev/null
 +++ b/Makefile.vita.gles2.dolce
 @@ -0,0 +1,58 @@
@@ -29,7 +29,7 @@ index 000000000..7573cf471
 +	src/render/software/*.c \
 +	src/render/vitagles2/*.c \
 +	src/sensor/*.c \
-+	src/sensor/dummy/*.c \
++	src/sensor/vita/*.c \
 +	src/stdlib/*.c \
 +	src/thread/*.c \
 +	src/thread/generic/SDL_systls.c \
@@ -64,7 +64,7 @@ index 000000000..7573cf471
 +	@echo "Installed!"
 diff --git a/Makefile.vita.gxm.dolce b/Makefile.vita.gxm.dolce
 new file mode 100644
-index 000000000..ca84ccdd6
+index 000000000..bc560fda5
 --- /dev/null
 +++ b/Makefile.vita.gxm.dolce
 @@ -0,0 +1,58 @@
@@ -93,7 +93,7 @@ index 000000000..ca84ccdd6
 +	src/render/software/*.c \
 +	src/render/vitagxm/*.c \
 +	src/sensor/*.c \
-+	src/sensor/dummy/*.c \
++	src/sensor/vita/*.c \
 +	src/stdlib/*.c \
 +	src/thread/*.c \
 +	src/thread/generic/SDL_systls.c \
@@ -141,10 +141,10 @@ index 3937dbc38..66ca07312 100644
  #include "SDL_config_minimal.h"
 diff --git a/include/SDL_config_vita.h b/include/SDL_config_vita.h
 new file mode 100644
-index 000000000..dad50989d
+index 000000000..e34767df2
 --- /dev/null
 +++ b/include/SDL_config_vita.h
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,160 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
@@ -284,6 +284,7 @@ index 000000000..dad50989d
 +#define SDL_POWER_VITA 1
 +#define SDL_VIDEO_DRIVER_VITA  1
 +#define SDL_FILESYSTEM_VITA   1
++#define SDL_SENSOR_VITA 1
 +
 +#if defined(_VITA_GLES2_)
 + #define SDL_VIDEO_RENDER_VITA_GLES2 1
@@ -302,10 +303,6 @@ index 000000000..dad50989d
 +/* VITA can't load shared object (src/loadso/dummy/\*.c) */
 +// that' not true, but oh well
 +#define SDL_LOADSO_DISABLED    1
-+
-+/* TODO: VITA does have gyroscope. */
-+#define SDL_SENSOR_DISABLED 1
-+#define SDL_SENSOR_DUMMY  1
 +
 +#endif /* _SDL_config_vita_h */
 diff --git a/src/SDL.c b/src/SDL.c
@@ -7064,6 +7061,256 @@ index 000000000..42e7df9ca
 +    vPosition = mul(float4(aPosition, 1.f), wvp);
 +    vTexcoord = aTexcoord;
 +}
+diff --git a/src/sensor/SDL_sensor.c b/src/sensor/SDL_sensor.c
+index 68c3b1fc7..0b2bc086a 100644
+--- a/src/sensor/SDL_sensor.c
++++ b/src/sensor/SDL_sensor.c
+@@ -42,6 +42,9 @@ static SDL_SensorDriver *SDL_sensor_drivers[] = {
+ #if defined(SDL_SENSOR_DUMMY) || defined(SDL_SENSOR_DISABLED)
+     &SDL_DUMMY_SensorDriver
+ #endif
++#if defined(SDL_SENSOR_VITA)
++    &SDL_VITA_SensorDriver
++#endif
+ };
+ static SDL_Sensor *SDL_sensors = NULL;
+ static SDL_bool SDL_updating_sensor = SDL_FALSE;
+diff --git a/src/sensor/SDL_syssensor.h b/src/sensor/SDL_syssensor.h
+index 394c68b56..ae50bd2f4 100644
+--- a/src/sensor/SDL_syssensor.h
++++ b/src/sensor/SDL_syssensor.h
+@@ -99,6 +99,7 @@ typedef struct _SDL_SensorDriver
+ extern SDL_SensorDriver SDL_ANDROID_SensorDriver;
+ extern SDL_SensorDriver SDL_COREMOTION_SensorDriver;
+ extern SDL_SensorDriver SDL_DUMMY_SensorDriver;
++extern SDL_SensorDriver SDL_VITA_SensorDriver;
+ 
+ #endif /* SDL_syssensor_c_h_ */
+ 
+diff --git a/src/sensor/vita/SDL_vitasensor.c b/src/sensor/vita/SDL_vitasensor.c
+new file mode 100644
+index 000000000..286ab12ca
+--- /dev/null
++++ b/src/sensor/vita/SDL_vitasensor.c
+@@ -0,0 +1,189 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++
++#include "SDL_config.h"
++
++#if defined(SDL_SENSOR_VITA)
++
++#include "SDL_error.h"
++#include "SDL_sensor.h"
++#include "SDL_vitasensor.h"
++#include "../SDL_syssensor.h"
++#include <psp2/motion.h>
++#include <psp2/error.h>
++
++typedef struct
++{
++    SDL_SensorType type;
++    SDL_SensorID instance_id;
++} SDL_VitaSensor;
++
++static SDL_VitaSensor *SDL_sensors;
++static int SDL_sensors_count;
++
++static int
++SDL_VITA_SensorInit(void)
++{
++    sceMotionReset();
++    sceMotionStartSampling();
++//    sceMotionMagnetometerOn();
++    sceMotionSetAngleThreshold(40);
++    sceMotionSetGyroBiasCorrection(SCE_TRUE);
++
++    SDL_sensors_count = 2;
++
++    SDL_sensors = (SDL_VitaSensor *)SDL_calloc(SDL_sensors_count, sizeof(*SDL_sensors));
++    if (!SDL_sensors) {
++        return SDL_OutOfMemory();
++    }
++
++    SDL_sensors[0].type = SDL_SENSOR_ACCEL;
++    SDL_sensors[0].instance_id = SDL_GetNextSensorInstanceID();
++    SDL_sensors[1].type = SDL_SENSOR_GYRO;
++    SDL_sensors[1].instance_id = SDL_GetNextSensorInstanceID();
++
++    return 0;
++}
++
++static int
++SDL_VITA_SensorGetCount(void)
++{
++    return SDL_sensors_count;
++}
++
++static void
++SDL_VITA_SensorDetect(void)
++{
++}
++
++static const char *
++SDL_VITA_SensorGetDeviceName(int device_index)
++{
++    if (device_index < SDL_sensors_count) {
++        switch (SDL_sensors[device_index].type) {
++            case SDL_SENSOR_ACCEL:
++                return "Accelerometer";
++            case SDL_SENSOR_GYRO:
++                return "Gyro";
++            default:
++                return "Unknown";
++        }
++    }
++
++    return NULL;
++}
++
++static SDL_SensorType
++SDL_VITA_SensorGetDeviceType(int device_index)
++{
++    if (device_index < SDL_sensors_count) {
++        return SDL_sensors[device_index].type;
++    }
++
++    return SDL_SENSOR_INVALID;
++}
++
++static int
++SDL_VITA_SensorGetDeviceNonPortableType(int device_index)
++{
++    if (device_index < SDL_sensors_count) {
++        return SDL_sensors[device_index].type;
++    }
++    return -1;
++}
++
++static SDL_SensorID
++SDL_VITA_SensorGetDeviceInstanceID(int device_index)
++{
++    if (device_index < SDL_sensors_count) {
++        return SDL_sensors[device_index].instance_id;
++    }
++    return -1;
++}
++
++static int
++SDL_VITA_SensorOpen(SDL_Sensor *sensor, int device_index)
++{
++    return 0;
++}
++
++static void
++SDL_VITA_SensorUpdate(SDL_Sensor *sensor)
++{
++    SceMotionState motionState;
++    int err = SCE_OK;
++    err = sceMotionGetState(&motionState);
++    if (err != SCE_OK) return;
++
++    switch (sensor->type)
++    {
++        case SDL_SENSOR_ACCEL:
++        {
++            float data[3];
++            data[0] = motionState.acceleration.x * SDL_STANDARD_GRAVITY;
++            data[1] = motionState.acceleration.y * SDL_STANDARD_GRAVITY;
++            data[2] = motionState.acceleration.z * SDL_STANDARD_GRAVITY;
++            SDL_PrivateSensorUpdate(sensor, data, SDL_arraysize(data));
++        }
++        break;
++        case SDL_SENSOR_GYRO:
++        {
++            float data[3];
++            data[0] = motionState.angularVelocity.x;
++            data[1] = motionState.angularVelocity.y;
++            data[2] = motionState.angularVelocity.z;
++            SDL_PrivateSensorUpdate(sensor, data, SDL_arraysize(data));
++        }
++        break;
++        default:
++        break;
++    }
++}
++
++static void
++SDL_VITA_SensorClose(SDL_Sensor *sensor)
++{
++}
++
++static void
++SDL_VITA_SensorQuit(void)
++{
++    sceMotionStopSampling();
++}
++
++SDL_SensorDriver SDL_VITA_SensorDriver =
++{
++    SDL_VITA_SensorInit,
++    SDL_VITA_SensorGetCount,
++    SDL_VITA_SensorDetect,
++    SDL_VITA_SensorGetDeviceName,
++    SDL_VITA_SensorGetDeviceType,
++    SDL_VITA_SensorGetDeviceNonPortableType,
++    SDL_VITA_SensorGetDeviceInstanceID,
++    SDL_VITA_SensorOpen,
++    SDL_VITA_SensorUpdate,
++    SDL_VITA_SensorClose,
++    SDL_VITA_SensorQuit,
++};
++
++#endif /* SDL_SENSOR_VITA */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/sensor/vita/SDL_vitasensor.h b/src/sensor/vita/SDL_vitasensor.h
+new file mode 100644
+index 000000000..ee66f2fe0
+--- /dev/null
++++ b/src/sensor/vita/SDL_vitasensor.h
+@@ -0,0 +1,23 @@
++/*
++  Simple DirectMedia Layer
++  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++     claim that you wrote the original software. If you use this software
++     in a product, an acknowledgment in the product documentation would be
++     appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++     misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++*/
++#include "SDL_config.h"
++
++/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/thread/SDL_thread_c.h b/src/thread/SDL_thread_c.h
 index 9cc52af1a..0d8b434ac 100644
 --- a/src/thread/SDL_thread_c.h
