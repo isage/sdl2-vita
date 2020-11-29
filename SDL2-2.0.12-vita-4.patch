@@ -4044,7 +4044,7 @@ index 000000000..dd7091591
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/render/vitagxm/SDL_render_vita_gxm.c b/src/render/vitagxm/SDL_render_vita_gxm.c
 new file mode 100644
-index 000000000..88ecf704f
+index 000000000..c8024d4ea
 --- /dev/null
 +++ b/src/render/vitagxm/SDL_render_vita_gxm.c
 @@ -0,0 +1,1124 @@
@@ -5035,7 +5035,7 @@ index 000000000..88ecf704f
 +    Uint32 pixel_format, void *pixels, int pitch)
 +{
 +    // TODO: read from texture rendertarget. Although no-one sane should do it.
-+    if (render->target) {
++    if (renderer->target) {
 +        return SDL_Unsupported();
 +    }
 +
