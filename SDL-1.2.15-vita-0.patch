@@ -1,0 +1,2505 @@
+diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
+new file mode 100644
+index 000000000..a4cb35021
+--- /dev/null
++++ b/Makefile.vita.dolce
+@@ -0,0 +1,48 @@
++# Makefile to build the SDL library
++
++INCLUDE = -I./include
++CFLAGS  = -Wl,-q -g -O3 $(INCLUDE)
++
++CC	= arm-dolce-eabi-gcc
++AR	= arm-dolce-eabi-ar
++RANLIB	= arm-dolce-eabi-ranlib
++
++CONFIG_H = include/SDL_config.h
++TARGET  = libSDL.a
++SOURCES = \
++	src/*.c \
++	src/audio/*.c \
++	src/cdrom/*.c \
++	src/cpuinfo/*.c \
++	src/events/*.c \
++	src/file/*.c \
++	src/joystick/*.c \
++	src/stdlib/*.c \
++	src/thread/*.c \
++	src/timer/*.c \
++	src/video/*.c \
++	src/audio/vita/*.c \
++	src/video/vita/*.c \
++	src/joystick/vita/*.c \
++	src/cdrom/dummy/*.c \
++	src/thread/vita/*.c \
++	src/timer/vita/*.c \
++	src/loadso/dummy/*.c \
++
++OBJECTS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
++
++$(TARGET): $(CONFIG_H) $(OBJECTS)
++	$(AR) crv $@ $^
++	$(RANLIB) $@
++
++$(CONFIG_H):
++	cp $(CONFIG_H).default $(CONFIG_H)
++
++clean:
++	rm -f $(TARGET) $(OBJECTS)
++
++install: $(TARGET)
++	@cp  $(TARGET) $(DOLCESDK)/arm-dolce-eabi/lib
++	@mkdir -p "$(DOLCESDK)/arm-dolce-eabi/include/SDL"
++	@cp include/*.h "$(DOLCESDK)/arm-dolce-eabi/include/SDL"
++	@echo "Installed!"
+diff --git a/include/SDL_config.h.default b/include/SDL_config.h.default
+index 09ba38a71..7515a3d90 100644
+--- a/include/SDL_config.h.default
++++ b/include/SDL_config.h.default
+@@ -38,6 +38,8 @@
+ #include "SDL_config_win32.h"
+ #elif defined(__OS2__)
+ #include "SDL_config_os2.h"
++#elif defined(__VITA__)
++#include "SDL_config_vita.h"
+ #else
+ #include "SDL_config_minimal.h"
+ #endif /* platform config */
+diff --git a/include/SDL_config_vita.h b/include/SDL_config_vita.h
+new file mode 100644
+index 000000000..d8efa7792
+--- /dev/null
++++ b/include/SDL_config_vita.h
+@@ -0,0 +1,144 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++
++#ifndef _SDL_CONFIG_VITA_h
++#define _SDL_CONFIG_VITA_h
++
++#include "SDL_platform.h"
++
++/* This is the minimal configuration that can be used to build SDL */
++
++#include <stdlib.h>
++#include <stdarg.h>
++#include <stdint.h>
++
++#define __VITA__ 1
++
++typedef signed char int8_t;
++typedef unsigned char uint8_t;
++typedef signed short int16_t;
++typedef unsigned short uint16_t;
++typedef unsigned int size_t;
++
++#define SDL_HAS_64BIT_TYPE 1
++
++#define HAVE_GCC_ATOMICS    1
++
++#define HAVE_ALLOCA_H       1
++#define HAVE_SYS_TYPES_H    1
++#define HAVE_STDIO_H    1
++#define STDC_HEADERS    1
++#define HAVE_STRING_H   1
++#define HAVE_INTTYPES_H 1
++#define HAVE_STDINT_H   1
++#define HAVE_CTYPE_H    1
++#define HAVE_MATH_H 1
++#define HAVE_SIGNAL_H   1
++
++/* C library functions */
++#define HAVE_MALLOC 1
++#define HAVE_CALLOC 1
++#define HAVE_REALLOC    1
++#define HAVE_FREE   1
++#define HAVE_ALLOCA 1
++#define HAVE_GETENV 1
++#define HAVE_SETENV 1
++#define HAVE_PUTENV 1
++#define HAVE_SETENV 1
++#define HAVE_UNSETENV   1
++#define HAVE_QSORT  1
++#define HAVE_ABS    1
++#define HAVE_BCOPY  1
++#define HAVE_MEMSET 1
++#define HAVE_MEMCPY 1
++#define HAVE_MEMMOVE    1
++#define HAVE_MEMCMP 1
++#define HAVE_STRLEN 1
++#define HAVE_STRLCPY    1
++#define HAVE_STRLCAT    1
++#define HAVE_STRDUP 1
++#define HAVE_STRCHR 1
++#define HAVE_STRRCHR    1
++#define HAVE_STRSTR 1
++#define HAVE_STRTOL 1
++#define HAVE_STRTOUL    1
++#define HAVE_STRTOLL    1
++#define HAVE_STRTOULL   1
++#define HAVE_STRTOD 1
++#define HAVE_ATOI   1
++#define HAVE_ATOF   1
++#define HAVE_STRCMP 1
++#define HAVE_STRNCMP    1
++#define HAVE_STRCASECMP 1
++#define HAVE_STRNCASECMP 1
++#define HAVE_VSSCANF 1
++#define HAVE_VSNPRINTF  1
++#define HAVE_M_PI   1
++#define HAVE_ATAN   1
++#define HAVE_ATAN2  1
++#define HAVE_ACOS  1
++#define HAVE_ASIN  1
++#define HAVE_CEIL   1
++#define HAVE_COPYSIGN   1
++#define HAVE_COS    1
++#define HAVE_COSF   1
++#define HAVE_FABS   1
++#define HAVE_FLOOR  1
++#define HAVE_LOG    1
++#define HAVE_POW    1
++#define HAVE_SCALBN 1
++#define HAVE_SIN    1
++#define HAVE_SINF   1
++#define HAVE_SQRT   1
++#define HAVE_SQRTF  1
++#define HAVE_TAN    1
++#define HAVE_TANF   1
++#define HAVE_SETJMP 1
++#define HAVE_NANOSLEEP  1
++/* #define HAVE_SYSCONF  1 */
++/* #define HAVE_SIGACTION    1 */
++
++/* VITA isn't that sophisticated */
++#define LACKS_SYS_MMAN_H 1
++
++/* Enable the stub cdrom driver (src/cdrom/dummy/\*.c) */
++#define SDL_CDROM_DISABLED	1
++
++/* Enable the stub shared object loader (src/loadso/dummy/\*.c) */
++#define SDL_LOADSO_DISABLED	1
++
++/* Enable the vita joystick driver (src/joystick/vita/\*.c) */
++#define SDL_JOYSTICK_VITA	1
++
++/* Enable the vita audio driver (src/audio/vita/\*.c) */
++#define SDL_AUDIO_DRIVER_VITA	1
++
++/* Enable the vita thread support (src/thread/vita/\*.c) */
++#define SDL_THREAD_VITA	1
++
++/* Enable the vita timer support (src/timer/vita/\*.c) */
++#define SDL_TIMER_VITA	1
++
++/* Enable the vita video driver (src/video/vita/\*.c) */
++#define SDL_VIDEO_DRIVER_VITA	1
++
++#endif /* _SDL_CONFIG_VITA_h */
+diff --git a/include/SDL_platform.h b/include/SDL_platform.h
+index 48540a85d..5635b4538 100644
+--- a/include/SDL_platform.h
++++ b/include/SDL_platform.h
+@@ -106,5 +106,9 @@
+ #undef __WIN32__
+ #define __WIN32__	1
+ #endif
++#if defined(__vita__)
++#undef __VITA__
++#define __VITA__	1
++#endif
+ 
+ #endif /* _SDL_platform_h */
+diff --git a/include/SDL_stdinc.h b/include/SDL_stdinc.h
+index 35a4fdde5..b939d4a9a 100644
+--- a/include/SDL_stdinc.h
++++ b/include/SDL_stdinc.h
+@@ -147,7 +147,7 @@ typedef enum {
+ 	DUMMY_ENUM_VALUE
+ } SDL_DUMMY_ENUM;
+ 
+-#ifndef __NDS__
++#if !defined(__NDS__) && !defined(__VITA__)
+ SDL_COMPILE_TIME_ASSERT(enum, sizeof(SDL_DUMMY_ENUM) == sizeof(int));
+ #endif
+ /*@}*/
+diff --git a/src/audio/SDL_audio.c b/src/audio/SDL_audio.c
+index beb26e0b4..9fac07774 100644
+--- a/src/audio/SDL_audio.c
++++ b/src/audio/SDL_audio.c
+@@ -112,6 +112,9 @@ static AudioBootStrap *bootstrap[] = {
+ #endif
+ #if SDL_AUDIO_DRIVER_EPOCAUDIO
+ 	&EPOCAudio_bootstrap,
++#endif
++#if SDL_AUDIO_DRIVER_VITA
++	&VITAAUD_bootstrap,
+ #endif
+ 	NULL
+ };
+diff --git a/src/audio/SDL_sysaudio.h b/src/audio/SDL_sysaudio.h
+index 74ac21df0..7a8004f9e 100644
+--- a/src/audio/SDL_sysaudio.h
++++ b/src/audio/SDL_sysaudio.h
+@@ -179,6 +179,9 @@ extern AudioBootStrap DART_bootstrap;
+ #if SDL_AUDIO_DRIVER_EPOCAUDIO
+ extern AudioBootStrap EPOCAudio_bootstrap; 
+ #endif
++#if SDL_AUDIO_DRIVER_VITA
++extern AudioBootStrap VITAAUD_bootstrap;
++#endif
+ 
+ /* This is the current audio device */
+ extern SDL_AudioDevice *current_audio;
+diff --git a/src/audio/vita/SDL_vitaaudio.c b/src/audio/vita/SDL_vitaaudio.c
+new file mode 100644
+index 000000000..82720b3bc
+--- /dev/null
++++ b/src/audio/vita/SDL_vitaaudio.c
+@@ -0,0 +1,209 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++
++    This file written by Ryan C. Gordon (icculus@icculus.org)
++*/
++#include "SDL_config.h"
++
++#include "SDL_rwops.h"
++#include "SDL_timer.h"
++#include "SDL_audio.h"
++#include "../SDL_audiomem.h"
++#include "../SDL_audio_c.h"
++#include "../SDL_audiodev_c.h"
++
++#include "SDL_vitaaudio.h"
++
++#include <psp2/kernel/threadmgr.h>
++#include <psp2/audioout.h>
++
++/* The tag name used by DUMMY audio */
++#define VITAAUD_DRIVER_NAME         "vita"
++
++#define SDL_AUDIO_MASK_BITSIZE		(0xFF)
++#define SDL_AUDIO_BITSIZE(x)		(x & SDL_AUDIO_MASK_BITSIZE)
++
++#define SCE_AUDIO_SAMPLE_ALIGN(s)	(((s) + 63) & ~63)
++#define SCE_AUDIO_MAX_VOLUME		0x8000
++
++/* Audio driver functions */
++static int VITAAUD_OpenAudio(_THIS, SDL_AudioSpec *spec);
++static void VITAAUD_WaitAudio(_THIS);
++static void VITAAUD_PlayAudio(_THIS);
++static Uint8 *VITAAUD_GetAudioBuf(_THIS);
++static void VITAAUD_CloseAudio(_THIS);
++
++/* Audio driver bootstrap functions */
++static int VITAAUD_Available(void)
++{
++    return(1);
++}
++
++static void VITAAUD_ThreadInit(_THIS)
++{
++    /* Increase the priority of this audio thread by 1 to put it
++       ahead of other SDL threads. */
++    SceUID thid;
++    SceKernelThreadInfo info;
++    thid = sceKernelGetThreadId();
++    info.size = sizeof(SceKernelThreadInfo);
++    if (sceKernelGetThreadInfo(thid, &info) == 0) {
++        sceKernelChangeThreadPriority(thid, info.currentPriority - 1);
++    }
++}
++
++static void VITAAUD_DeleteDevice(SDL_AudioDevice *device)
++{
++    SDL_free(device->hidden);
++    SDL_free(device);
++}
++
++static SDL_AudioDevice *VITAAUD_CreateDevice(int devindex)
++{
++    SDL_AudioDevice *this;
++
++    /* Initialize all variables that we clean on shutdown */
++    this = (SDL_AudioDevice *)SDL_malloc(sizeof(SDL_AudioDevice));
++    if ( this ) {
++        SDL_memset(this, 0, (sizeof *this));
++        this->hidden = (struct SDL_PrivateAudioData *)SDL_malloc((sizeof *this->hidden));
++    }
++    if ( (this == NULL) || (this->hidden == NULL) ) {
++        SDL_OutOfMemory();
++        if ( this ) {
++            SDL_free(this);
++        }
++        return(0);
++    }
++    SDL_memset(this->hidden, 0, (sizeof *this->hidden));
++
++    /* Set the function pointers */
++    this->OpenAudio = VITAAUD_OpenAudio;
++    this->WaitAudio = VITAAUD_WaitAudio;
++    this->PlayAudio = VITAAUD_PlayAudio;
++    this->GetAudioBuf = VITAAUD_GetAudioBuf;
++    this->CloseAudio = VITAAUD_CloseAudio;
++    this->ThreadInit = VITAAUD_ThreadInit;
++
++    this->free = VITAAUD_DeleteDevice;
++
++    return this;
++}
++
++AudioBootStrap VITAAUD_bootstrap = {
++    VITAAUD_DRIVER_NAME, "SDL vita audio driver",
++    VITAAUD_Available, VITAAUD_CreateDevice
++};
++
++/* This function waits until it is possible to write a full sound buffer */
++static void VITAAUD_WaitAudio(_THIS)
++{
++}
++
++static void VITAAUD_PlayAudio(_THIS)
++{
++    Uint8 *mixbuf = this->hidden->mixbufs[this->hidden->next_buffer];
++
++    int vols[2] = {SCE_AUDIO_MAX_VOLUME, SCE_AUDIO_MAX_VOLUME};
++    sceAudioOutSetVolume(this->hidden->channel, SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH, vols);
++    sceAudioOutOutput(this->hidden->channel, mixbuf);
++
++    this->hidden->next_buffer = (this->hidden->next_buffer + 1) % NUM_BUFFERS;
++}
++
++static Uint8 *VITAAUD_GetAudioBuf(_THIS)
++{
++        return this->hidden->mixbufs[this->hidden->next_buffer];
++}
++
++static void VITAAUD_CloseAudio(_THIS)
++{
++    if (this->hidden->channel >= 0) {
++        sceAudioOutReleasePort(this->hidden->channel);
++        this->hidden->channel = -1;
++    }
++
++    if (this->hidden->rawbuf != NULL) {
++        free(this->hidden->rawbuf);
++        this->hidden->rawbuf = NULL;
++    }
++}
++
++static int VITAAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
++{
++    int format, mixlen, i, port = SCE_AUDIO_OUT_PORT_TYPE_MAIN;
++
++    /* The sample count must be a multiple of 64. */
++    this->spec.samples = SCE_AUDIO_SAMPLE_ALIGN(this->spec.samples);
++    this->spec.freq = spec->freq;
++
++    /* Update the fragment size as size in bytes. */
++    /*  SDL_CalculateAudioSpec(this->spec); MOD */
++    switch (this->spec.format) {
++    case AUDIO_U8:
++        this->spec.silence = 0x80;
++        break;
++    default:
++        this->spec.silence = 0x00;
++        break;
++    }
++    this->spec.size = SDL_AUDIO_BITSIZE(this->spec.format) / 8;
++    this->spec.size *= this->spec.channels;
++    this->spec.size *= this->spec.samples;
++
++    /* Allocate the mixing buffer.  Its size and starting address must
++       be a multiple of 64 bytes.  Our sample count is already a multiple of
++       64, so spec->size should be a multiple of 64 as well. */
++    mixlen = this->spec.size * NUM_BUFFERS;
++    this->hidden->rawbuf = (Uint8 *) memalign(64, mixlen);
++    if (this->hidden->rawbuf == NULL) {
++        SDL_SetError("Couldn't allocate mixing buffer");
++        return -1;
++    }
++
++    /* Setup the hardware channel. */
++    if (this->spec.channels == 1) {
++        format = SCE_AUDIO_OUT_MODE_MONO;
++    } else {
++        format = SCE_AUDIO_OUT_MODE_STEREO;
++    }
++
++    if(this->spec.freq < 48000) {
++        port = SCE_AUDIO_OUT_PORT_TYPE_BGM;
++    }
++
++    this->hidden->channel = sceAudioOutOpenPort(port, this->spec.samples, this->spec.freq, format);
++    if (this->hidden->channel < 0) {
++        free(this->hidden->rawbuf);
++        this->hidden->rawbuf = NULL;
++        SDL_SetError("Couldn't reserve hardware channel");
++        return -1;
++    }
++
++    SDL_memset(this->hidden->rawbuf, 0, mixlen);
++    for (i = 0; i < NUM_BUFFERS; i++) {
++        this->hidden->mixbufs[i] = &this->hidden->rawbuf[i * this->spec.size];
++    }
++
++    this->hidden->next_buffer = 0;
++    return 0;
++}
++
+diff --git a/src/audio/vita/SDL_vitaaudio.h b/src/audio/vita/SDL_vitaaudio.h
+new file mode 100644
+index 000000000..f4aa5e726
+--- /dev/null
++++ b/src/audio/vita/SDL_vitaaudio.h
+@@ -0,0 +1,46 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#ifndef _SDL_vitaaudio_h
++#define _SDL_vitaaudio_h
++
++#include "../SDL_sysaudio.h"
++
++/* Hidden "this" pointer for the video functions */
++#define _THIS	SDL_AudioDevice *this
++
++#define NUM_BUFFERS 2
++
++struct SDL_PrivateAudioData {
++	/* The file descriptor for the audio device */
++    /* The hardware output channel. */
++    int     channel;
++    /* The raw allocated mixing buffer. */
++    Uint8   *rawbuf;
++    /* Individual mixing buffers. */
++    Uint8   *mixbufs[NUM_BUFFERS];
++    /* Index of the next available mixing buffer. */
++    int     next_buffer;
++};
++
++#endif /* _SDL_vitaaudio_h */
+diff --git a/src/joystick/vita/SDL_sysjoystick.c b/src/joystick/vita/SDL_sysjoystick.c
+new file mode 100644
+index 000000000..4244b816d
+--- /dev/null
++++ b/src/joystick/vita/SDL_sysjoystick.c
+@@ -0,0 +1,242 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#if SDL_JOYSTICK_VITA
++
++/* This is the system specific header for the SDL joystick API */
++
++#include "SDL_joystick.h"
++#include "../SDL_sysjoystick.h"
++#include "../SDL_joystick_c.h"
++
++#include <psp2/types.h>
++#include <psp2/ctrl.h>
++#include <psp2/kernel/threadmgr.h>
++
++/* Current pad state */
++static SceCtrlData pad0 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static SceCtrlData pad1 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static SceCtrlData pad2 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++static SceCtrlData pad3 = { .lx = 0, .ly = 0, .rx = 0, .ry = 0, .buttons = 0 };
++
++static int port_map[4]= { 0, 2, 3, 4 }; //index: SDL joy number, entry: Vita port number
++
++static const unsigned int button_map[] = {
++    SCE_CTRL_TRIANGLE, SCE_CTRL_CIRCLE, SCE_CTRL_CROSS, SCE_CTRL_SQUARE,
++    SCE_CTRL_LTRIGGER, SCE_CTRL_RTRIGGER,
++    SCE_CTRL_DOWN, SCE_CTRL_LEFT, SCE_CTRL_UP, SCE_CTRL_RIGHT,
++    SCE_CTRL_SELECT, SCE_CTRL_START};
++
++static int analog_map[256];  /* Map analog inputs to -32768 -> 32767 */
++
++typedef struct
++{
++  int x;
++  int y;
++} point;
++
++/* 4 points define the bezier-curve. */
++/* The Vita has a good amount of analog travel, so use a linear curve */
++static point a = { 0, 0 };
++static point b = { 0, 0  };
++static point c = { 128, 32767 };
++static point d = { 128, 32767 };
++
++/* simple linear interpolation between two points */
++static inline void lerp (point *dest, point *a, point *b, float t)
++{
++    dest->x = a->x + (b->x - a->x)*t;
++    dest->y = a->y + (b->y - a->y)*t;
++}
++
++/* evaluate a point on a bezier-curve. t goes from 0 to 1.0 */
++static int calc_bezier_y(float t)
++{
++    point ab, bc, cd, abbc, bccd, dest;
++    lerp (&ab, &a, &b, t);           /* point between a and b */
++    lerp (&bc, &b, &c, t);           /* point between b and c */
++    lerp (&cd, &c, &d, t);           /* point between c and d */
++    lerp (&abbc, &ab, &bc, t);       /* point between ab and bc */
++    lerp (&bccd, &bc, &cd, t);       /* point between bc and cd */
++    lerp (&dest, &abbc, &bccd, t);   /* point on the bezier-curve */
++    return dest.y;
++}
++
++/* Function to scan the system for joysticks.
++ * This function should set SDL_numjoysticks to the number of available
++ * joysticks.  Joystick 0 should be the system default joystick.
++ * It should return 0, or -1 on an unrecoverable fatal error.
++ */
++int SDL_SYS_JoystickInit(void)
++{
++    int i;
++
++    /* Setup input */
++    sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
++
++    /* Create an accurate map from analog inputs (0 to 255)
++       to SDL joystick positions (-32768 to 32767) */
++    for (i = 0; i < 128; i++)
++    {
++        float t = (float)i/127.0f;
++        analog_map[i+128] = calc_bezier_y(t);
++        analog_map[127-i] = -1 * analog_map[i+128];
++    }
++
++    SceCtrlPortInfo myPortInfo;
++
++    // Assume we have at least one controller, even when nothing is paired
++    // This way the user can jump in, pair a controller
++    // and control things immediately even if it is paired
++    // after the app has already started.
++
++    SDL_numjoysticks = 1; 
++
++    //How many additional paired controllers are there?
++    sceCtrlGetControllerPortInfo(&myPortInfo);
++    //On Vita TV, port 0 and 1 are the same controller
++    //and that is the first one, so start at port 2
++    for (i=2; i<=4; i++)
++    {
++        if (myPortInfo.port[i]!=SCE_CTRL_TYPE_UNPAIRED)
++        {
++            SDL_numjoysticks++;
++        }
++    }
++   return SDL_numjoysticks;
++}
++
++/* Function to get the device-dependent name of a joystick */
++const char *SDL_SYS_JoystickName(int index)
++{
++    if (index >= 0 && index < 4)
++        return "PSVita Controller";
++
++    SDL_SetError("No joystick available with that index");
++    return(NULL);
++}
++
++/* Function to open a joystick for use.
++   The joystick to open is specified by the index field of the joystick.
++   This should fill the nbuttons and naxes fields of the joystick structure.
++   It returns 0, or -1 if there is an error.
++ */
++int SDL_SYS_JoystickOpen(SDL_Joystick *joystick)
++{
++    joystick->nbuttons = sizeof(button_map)/sizeof(*button_map);
++    joystick->naxes = 4;
++    joystick->nhats = 0;
++
++    return 0;
++}
++
++/* Function to update the state of a joystick - called as a device poll.
++ * This function shouldn't update the joystick structure directly,
++ * but instead should call SDL_PrivateJoystick*() to deliver events
++ * and update joystick device state.
++ */
++void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
++{
++    int i;
++    unsigned int buttons;
++    unsigned int changed;
++    unsigned char lx, ly, rx, ry;
++    static unsigned int old_buttons[] = { 0, 0, 0, 0 };
++    static unsigned char old_lx[] = { 0, 0, 0, 0 };
++    static unsigned char old_ly[] = { 0, 0, 0, 0 };
++    static unsigned char old_rx[] = { 0, 0, 0, 0 };
++    static unsigned char old_ry[] = { 0, 0, 0, 0 };
++    SceCtrlData *pad = NULL;
++
++    int index = joystick->index;
++
++    switch (index) {
++        case 0:
++            pad = &pad0;
++            break;
++        case 1:
++            pad = &pad1;
++            break;
++        case 2:
++            pad = &pad2;
++            break;
++        case 3:
++            pad = &pad3;
++            break;
++        default:
++            return;
++    }
++
++    sceCtrlPeekBufferPositive(port_map[index], pad, 1); 
++
++    buttons = pad->buttons;
++    lx = pad->lx;
++    ly = pad->ly;
++    rx = pad->rx;
++    ry = pad->ry;
++
++    /* Axes */
++    if(old_lx[index] != lx) {
++        SDL_PrivateJoystickAxis(joystick, 0, analog_map[lx]);
++        old_lx[index] = lx;
++    }
++    if(old_ly[index] != ly) {
++        SDL_PrivateJoystickAxis(joystick, 1, analog_map[ly]);
++        old_ly[index] = ly;
++    }
++    if(old_rx[index] != rx) {
++        SDL_PrivateJoystickAxis(joystick, 2, analog_map[rx]);
++        old_rx[index] = rx;
++    }
++    if(old_ry[index] != ry) {
++        SDL_PrivateJoystickAxis(joystick, 3, analog_map[ry]);
++        old_ry[index] = ry;
++    }
++
++    /* Buttons */
++    changed = old_buttons[index] ^ buttons;
++    old_buttons[index] = buttons;
++    if(changed) {
++        for(i=0; i<sizeof(button_map)/sizeof(button_map[0]); i++) {
++            if(changed & button_map[i]) {
++                SDL_PrivateJoystickButton(
++                    joystick, i,
++                    (buttons & button_map[i]) ? 1 : 0);
++            }
++        }
++    }
++}
++
++/* Function to close a joystick after use */
++void SDL_SYS_JoystickClose(SDL_Joystick *joystick)
++{
++    return;
++}
++
++/* Function to perform any system-specific joystick related cleanup */
++void SDL_SYS_JoystickQuit(void)
++{
++    return;
++}
++
++#endif /* SDL_JOYSTICK_VITA */
+diff --git a/src/thread/SDL_thread_c.h b/src/thread/SDL_thread_c.h
+index 8af6e52f4..937d26592 100644
+--- a/src/thread/SDL_thread_c.h
++++ b/src/thread/SDL_thread_c.h
+@@ -43,6 +43,8 @@
+ #include "win32/SDL_systhread_c.h"
+ #elif SDL_THREAD_SYMBIAN
+ #include "symbian/SDL_systhread_c.h"
++#elif SDL_THREAD_VITA
++#include "vita/SDL_systhread_c.h"
+ #else
+ #error Need thread implementation for this platform
+ #include "generic/SDL_systhread_c.h"
+diff --git a/src/thread/vita/SDL_syscond.c b/src/thread/vita/SDL_syscond.c
+new file mode 100644
+index 000000000..f6e7223e3
+--- /dev/null
++++ b/src/thread/vita/SDL_syscond.c
+@@ -0,0 +1,215 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++/* An implementation of condition variables using semaphores and mutexes */
++/*
++   This implementation borrows heavily from the BeOS condition variable
++   implementation, written by Christopher Tate and Owen Smith.  Thanks!
++ */
++
++#include "SDL_thread.h"
++
++struct SDL_cond
++{
++	SDL_mutex *lock;
++	int waiting;
++	int signals;
++	SDL_sem *wait_sem;
++	SDL_sem *wait_done;
++};
++
++/* Create a condition variable */
++SDL_cond * SDL_CreateCond(void)
++{
++	SDL_cond *cond;
++
++	cond = (SDL_cond *) SDL_malloc(sizeof(SDL_cond));
++	if ( cond ) {
++		cond->lock = SDL_CreateMutex();
++		cond->wait_sem = SDL_CreateSemaphore(0);
++		cond->wait_done = SDL_CreateSemaphore(0);
++		cond->waiting = cond->signals = 0;
++		if ( ! cond->lock || ! cond->wait_sem || ! cond->wait_done ) {
++			SDL_DestroyCond(cond);
++			cond = NULL;
++		}
++	} else {
++		SDL_OutOfMemory();
++	}
++	return(cond);
++}
++
++/* Destroy a condition variable */
++void SDL_DestroyCond(SDL_cond *cond)
++{
++	if ( cond ) {
++		if ( cond->wait_sem ) {
++			SDL_DestroySemaphore(cond->wait_sem);
++		}
++		if ( cond->wait_done ) {
++			SDL_DestroySemaphore(cond->wait_done);
++		}
++		if ( cond->lock ) {
++			SDL_DestroyMutex(cond->lock);
++		}
++		SDL_free(cond);
++	}
++}
++
++/* Restart one of the threads that are waiting on the condition variable */
++int SDL_CondSignal(SDL_cond *cond)
++{
++	if ( ! cond ) {
++		SDL_SetError("Passed a NULL condition variable");
++		return -1;
++	}
++
++	/* If there are waiting threads not already signalled, then
++	   signal the condition and wait for the thread to respond.
++	*/
++	SDL_LockMutex(cond->lock);
++	if ( cond->waiting > cond->signals ) {
++		++cond->signals;
++		SDL_SemPost(cond->wait_sem);
++		SDL_UnlockMutex(cond->lock);
++		SDL_SemWait(cond->wait_done);
++	} else {
++		SDL_UnlockMutex(cond->lock);
++	}
++
++	return 0;
++}
++
++/* Restart all threads that are waiting on the condition variable */
++int SDL_CondBroadcast(SDL_cond *cond)
++{
++	if ( ! cond ) {
++		SDL_SetError("Passed a NULL condition variable");
++		return -1;
++	}
++
++	/* If there are waiting threads not already signalled, then
++	   signal the condition and wait for the thread to respond.
++	*/
++	SDL_LockMutex(cond->lock);
++	if ( cond->waiting > cond->signals ) {
++		int i, num_waiting;
++
++		num_waiting = (cond->waiting - cond->signals);
++		cond->signals = cond->waiting;
++		for ( i=0; i<num_waiting; ++i ) {
++			SDL_SemPost(cond->wait_sem);
++		}
++		/* Now all released threads are blocked here, waiting for us.
++		   Collect them all (and win fabulous prizes!) :-)
++		 */
++		SDL_UnlockMutex(cond->lock);
++		for ( i=0; i<num_waiting; ++i ) {
++			SDL_SemWait(cond->wait_done);
++		}
++	} else {
++		SDL_UnlockMutex(cond->lock);
++	}
++
++	return 0;
++}
++
++/* Wait on the condition variable for at most 'ms' milliseconds.
++   The mutex must be locked before entering this function!
++   The mutex is unlocked during the wait, and locked again after the wait.
++
++Typical use:
++
++Thread A:
++	SDL_LockMutex(lock);
++	while ( ! condition ) {
++		SDL_CondWait(cond);
++	}
++	SDL_UnlockMutex(lock);
++
++Thread B:
++	SDL_LockMutex(lock);
++	...
++	condition = true;
++	...
++	SDL_UnlockMutex(lock);
++ */
++int SDL_CondWaitTimeout(SDL_cond *cond, SDL_mutex *mutex, Uint32 ms)
++{
++	int retval;
++
++	if ( ! cond ) {
++		SDL_SetError("Passed a NULL condition variable");
++		return -1;
++	}
++
++	/* Obtain the protection mutex, and increment the number of waiters.
++	   This allows the signal mechanism to only perform a signal if there
++	   are waiting threads.
++	 */
++	SDL_LockMutex(cond->lock);
++	++cond->waiting;
++	SDL_UnlockMutex(cond->lock);
++
++	/* Unlock the mutex, as is required by condition variable semantics */
++	SDL_UnlockMutex(mutex);
++
++	/* Wait for a signal */
++	if ( ms == SDL_MUTEX_MAXWAIT ) {
++		retval = SDL_SemWait(cond->wait_sem);
++	} else {
++		retval = SDL_SemWaitTimeout(cond->wait_sem, ms);
++	}
++
++	/* Let the signaler know we have completed the wait, otherwise
++           the signaler can race ahead and get the condition semaphore
++           if we are stopped between the mutex unlock and semaphore wait,
++           giving a deadlock.  See the following URL for details:
++        http://www-classic.be.com/aboutbe/benewsletter/volume_III/Issue40.html
++	*/
++	SDL_LockMutex(cond->lock);
++	if ( cond->signals > 0 ) {
++		/* If we timed out, we need to eat a condition signal */
++		if ( retval > 0 ) {
++			SDL_SemWait(cond->wait_sem);
++		}
++		/* We always notify the signal thread that we are done */
++		SDL_SemPost(cond->wait_done);
++
++		/* Signal handshake complete */
++		--cond->signals;
++	}
++	--cond->waiting;
++	SDL_UnlockMutex(cond->lock);
++
++	/* Lock the mutex, as is required by condition variable semantics */
++	SDL_LockMutex(mutex);
++
++	return retval;
++}
++
++/* Wait on the condition variable forever */
++int SDL_CondWait(SDL_cond *cond, SDL_mutex *mutex)
++{
++	return SDL_CondWaitTimeout(cond, mutex, SDL_MUTEX_MAXWAIT);
++}
+diff --git a/src/thread/vita/SDL_sysmutex.c b/src/thread/vita/SDL_sysmutex.c
+new file mode 100644
+index 000000000..ecfea876a
+--- /dev/null
++++ b/src/thread/vita/SDL_sysmutex.c
+@@ -0,0 +1,129 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++/* An implementation of mutexes using semaphores */
++
++#include "SDL_thread.h"
++#include "SDL_systhread_c.h"
++
++
++struct SDL_mutex {
++	int recursive;
++	Uint32 owner;
++	SDL_sem *sem;
++};
++
++/* Create a mutex */
++SDL_mutex *SDL_CreateMutex(void)
++{
++	SDL_mutex *mutex;
++
++	/* Allocate mutex memory */
++	mutex = (SDL_mutex *)SDL_malloc(sizeof(*mutex));
++	if ( mutex ) {
++		/* Create the mutex semaphore, with initial value 1 */
++		mutex->sem = SDL_CreateSemaphore(1);
++		mutex->recursive = 0;
++		mutex->owner = 0;
++		if ( ! mutex->sem ) {
++			SDL_free(mutex);
++			mutex = NULL;
++		}
++	} else {
++		SDL_OutOfMemory();
++	}
++	return mutex;
++}
++
++/* Free the mutex */
++void SDL_DestroyMutex(SDL_mutex *mutex)
++{
++	if ( mutex ) {
++		if ( mutex->sem ) {
++			SDL_DestroySemaphore(mutex->sem);
++		}
++		SDL_free(mutex);
++	}
++}
++
++/* Lock the semaphore */
++int SDL_mutexP(SDL_mutex *mutex)
++{
++#if SDL_THREADS_DISABLED
++	return 0;
++#else
++	Uint32 this_thread;
++
++	if ( mutex == NULL ) {
++		SDL_SetError("Passed a NULL mutex");
++		return -1;
++	}
++
++	this_thread = SDL_ThreadID();
++	if ( mutex->owner == this_thread ) {
++		++mutex->recursive;
++	} else {
++		/* The order of operations is important.
++		   We set the locking thread id after we obtain the lock
++		   so unlocks from other threads will fail.
++		*/
++		SDL_SemWait(mutex->sem);
++		mutex->owner = this_thread;
++		mutex->recursive = 0;
++	}
++
++	return 0;
++#endif /* SDL_THREADS_DISABLED */
++}
++
++/* Unlock the mutex */
++int SDL_mutexV(SDL_mutex *mutex)
++{
++#if SDL_THREADS_DISABLED
++	return 0;
++#else
++	if ( mutex == NULL ) {
++		SDL_SetError("Passed a NULL mutex");
++		return -1;
++	}
++
++	/* If we don't own the mutex, we can't unlock it */
++	if ( SDL_ThreadID() != mutex->owner ) {
++		SDL_SetError("mutex not owned by this thread");
++		return -1;
++	}
++
++	if ( mutex->recursive ) {
++		--mutex->recursive;
++	} else {
++		/* The order of operations is important.
++		   First reset the owner so another thread doesn't lock
++		   the mutex and set the ownership before we reset it,
++		   then release the lock semaphore.
++		 */
++		mutex->owner = 0;
++		SDL_SemPost(mutex->sem);
++	}
++	return 0;
++#endif /* SDL_THREADS_DISABLED */
++}
+diff --git a/src/thread/vita/SDL_sysmutex_c.h b/src/thread/vita/SDL_sysmutex_c.h
+new file mode 100644
+index 000000000..1120b2d80
+--- /dev/null
++++ b/src/thread/vita/SDL_sysmutex_c.h
+@@ -0,0 +1,23 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
+diff --git a/src/thread/vita/SDL_syssem.c b/src/thread/vita/SDL_syssem.c
+new file mode 100644
+index 000000000..f3b86f6a6
+--- /dev/null
++++ b/src/thread/vita/SDL_syssem.c
+@@ -0,0 +1,168 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++/* An implementation of semaphores using mutexes and condition variables */
++
++#include "SDL_timer.h"
++#include "SDL_thread.h"
++#include "SDL_systhread_c.h"
++
++#include <psp2/types.h>
++#include <psp2/kernel/error.h>
++#include <psp2/kernel/threadmgr.h>
++
++struct SDL_semaphore
++{
++    SceUID  semid;
++};
++
++SDL_sem *SDL_CreateSemaphore(Uint32 initial_value)
++{
++    SDL_sem *sem;
++
++    sem = (SDL_sem *)SDL_malloc(sizeof(*sem));
++    if ( ! sem )
++    {
++        SDL_OutOfMemory();
++        return NULL;
++    }
++
++    sem->semid = sceKernelCreateSema("SDL sema", 0, initial_value, 255, 0);
++    if (sem->semid < 0)
++    {
++        SDL_SetError("Couldn't create semaphore");
++        free(sem);
++        sem = NULL;
++    }
++
++    return sem;
++}
++
++/* WARNING:
++   You cannot call this function when another thread is using the semaphore.
++*/
++void SDL_DestroySemaphore(SDL_sem *sem)
++{
++    if (sem != NULL)
++    {
++        if (sem->semid > 0)
++        {
++            sceKernelDeleteSema(sem->semid);
++            sem->semid = 0;
++        }
++        free(sem);
++    }
++}
++
++int SDL_SemWaitTimeout(SDL_sem *sem, Uint32 timeout)
++{
++    Uint32 *pTimeout;
++    unsigned int res;
++
++    if (sem == NULL)
++    {
++        SDL_SetError("Passed a NULL sem");
++        return 0;
++    }
++
++    if (timeout == 0)
++    {
++        res = sceKernelPollSema(sem->semid, 1);
++        if (res < 0)
++        {
++            return SDL_MUTEX_TIMEDOUT;
++        }
++        return 0;
++    }
++
++    if (timeout == SDL_MUTEX_MAXWAIT)
++    {
++        pTimeout = NULL;
++    }
++    else
++    {
++        timeout *= 1000;  /* Convert to microseconds. */
++        pTimeout = &timeout;
++    }
++
++    res = sceKernelWaitSema(sem->semid, 1, pTimeout);
++    switch (res)
++    {
++        case SCE_KERNEL_OK:
++            return 0;
++        case SCE_KERNEL_ERROR_WAIT_TIMEOUT:
++            return SDL_MUTEX_TIMEDOUT;
++        default:
++            SDL_SetError("WaitForSingleObject() failed");
++            return -1;
++    }
++}
++
++int SDL_SemTryWait(SDL_sem *sem)
++{
++    return SDL_SemWaitTimeout(sem, 0);
++}
++
++int SDL_SemWait(SDL_sem *sem)
++{
++    return SDL_SemWaitTimeout(sem, SDL_MUTEX_MAXWAIT);
++}
++
++Uint32 SDL_SemValue(SDL_sem *sem)
++{
++    SceKernelSemaInfo info;
++    info.size = sizeof(info);
++
++    if (sem == NULL)
++    {
++        SDL_SetError("Passed a NULL sem");
++        return 0;
++    }
++
++    if (sceKernelGetSemaInfo(sem->semid, &info) >= 0)
++    {
++        return info.currentCount;
++    }
++
++    return 0;
++}
++
++int SDL_SemPost(SDL_sem *sem)
++{
++    int res;
++
++    if (sem == NULL)
++    {
++        SDL_SetError("Passed a NULL sem");
++        return -1;
++    }
++
++    res = sceKernelSignalSema(sem->semid, 1);
++    if (res < 0)
++    {
++        SDL_SetError("sceKernelSignalSema() failed");
++        return -1;
++    }
++
++    return 0;
++}
+diff --git a/src/thread/vita/SDL_systhread.c b/src/thread/vita/SDL_systhread.c
+new file mode 100644
+index 000000000..bfd3cc5b2
+--- /dev/null
++++ b/src/thread/vita/SDL_systhread.c
+@@ -0,0 +1,83 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++/* Thread management routines for SDL */
++
++#include "SDL_thread.h"
++#include "../SDL_thread_c.h"
++#include "../SDL_systhread.h"
++
++#include <psp2/types.h>
++#include <psp2/kernel/threadmgr.h>
++
++static int ThreadEntry(SceSize args, void *argp)
++{
++    SDL_RunThread(*(void **) argp);
++    return 0;
++}
++
++int SDL_SYS_CreateThread(SDL_Thread *thread, void *args)
++{
++    SceKernelThreadInfo info;
++    int priority = 32;
++
++    /* Set priority of new thread to the same as the current thread */
++    info.size = sizeof(SceKernelThreadInfo);
++    if (sceKernelGetThreadInfo(sceKernelGetThreadId(), &info) == 0)
++    {
++        priority = info.currentPriority;
++    }
++
++    thread->handle = sceKernelCreateThread("SDL thread", ThreadEntry,
++                           priority, 0x10000, 0, 0, NULL);
++
++    if (thread->handle < 0)
++    {
++        SDL_SetError("sceKernelCreateThread() failed");
++        return -1;
++    }
++
++    sceKernelStartThread(thread->handle, 4, &args);
++    return 0;
++}
++
++void SDL_SYS_SetupThread(void)
++{
++    return;
++}
++
++Uint32 SDL_ThreadID(void)
++{
++    return (Uint32) sceKernelGetThreadId();
++}
++
++void SDL_SYS_WaitThread(SDL_Thread *thread)
++{
++    sceKernelWaitThreadEnd(thread->handle, NULL, NULL);
++    sceKernelDeleteThread(thread->handle);
++}
++
++void SDL_SYS_KillThread(SDL_Thread *thread)
++{
++    sceKernelDeleteThread(thread->handle);
++}
+diff --git a/src/thread/vita/SDL_systhread_c.h b/src/thread/vita/SDL_systhread_c.h
+new file mode 100644
+index 000000000..a9fe662e6
+--- /dev/null
++++ b/src/thread/vita/SDL_systhread_c.h
+@@ -0,0 +1,26 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Library General Public
++    License as published by the Free Software Foundation; either
++    version 2 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Library General Public License for more details.
++
++    You should have received a copy of the GNU Library General Public
++    License along with this library; if not, write to the Free
++    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#include <psp2/types.h>
++
++typedef SceUID SYS_ThreadHandle;
+diff --git a/src/timer/vita/SDL_systimer.c b/src/timer/vita/SDL_systimer.c
+new file mode 100644
+index 000000000..56141d083
+--- /dev/null
++++ b/src/timer/vita/SDL_systimer.c
+@@ -0,0 +1,108 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#include "SDL_timer.h"
++#include "../SDL_timer_c.h"
++#include <psp2/kernel/processmgr.h>
++
++static uint64_t start;
++static SDL_bool ticks_started = SDL_FALSE;
++
++void SDL_StartTicks(void)
++{
++    if (ticks_started)
++    {
++        return;
++    }
++    ticks_started = SDL_TRUE;
++    start = sceKernelGetProcessTimeWide();
++}
++
++Uint32 SDL_GetTicks (void)
++{
++    if (!ticks_started) {
++        SDL_StartTicks();
++    }
++
++    uint64_t now;
++    Uint32 ticks;
++
++    now = sceKernelGetProcessTimeWide();
++    ticks = (now - start)/1000;
++    return (ticks);
++}
++
++void SDL_Delay (Uint32 ms)
++{
++    const Uint32 max_delay = 0xffffffffUL / 1000;
++    if(ms > max_delay)
++        ms = max_delay;
++    sceKernelDelayThreadCB(ms * 1000);
++}
++
++#include "SDL_thread.h"
++
++/* Data to handle a single periodic alarm */
++static int timer_alive = 0;
++static SDL_Thread *timer = NULL;
++
++static int RunTimer(void *unused)
++{
++    while ( timer_alive ) {
++        if ( SDL_timer_running ) {
++            SDL_ThreadedTimerCheck();
++        }
++        SDL_Delay(1);
++    }
++    return(0);
++}
++
++/* This is only called if the event thread is not running */
++int SDL_SYS_TimerInit(void)
++{
++    timer_alive = 1;
++    timer = SDL_CreateThread(RunTimer, NULL);
++    if ( timer == NULL )
++        return(-1);
++    return(SDL_SetTimerThreaded(1));
++}
++
++void SDL_SYS_TimerQuit(void)
++{
++    timer_alive = 0;
++    if ( timer ) {
++        SDL_WaitThread(timer, NULL);
++        timer = NULL;
++    }
++}
++
++int SDL_SYS_StartTimer(void)
++{
++    SDL_SetError("Internal logic error: threaded timer in use");
++    return(-1);
++}
++
++void SDL_SYS_StopTimer(void)
++{
++    return;
++}
+diff --git a/src/video/SDL_sysvideo.h b/src/video/SDL_sysvideo.h
+index 436450e33..f59157d34 100644
+--- a/src/video/SDL_sysvideo.h
++++ b/src/video/SDL_sysvideo.h
+@@ -413,6 +413,9 @@ extern VideoBootStrap CACA_bootstrap;
+ #if SDL_VIDEO_DRIVER_DUMMY
+ extern VideoBootStrap DUMMY_bootstrap;
+ #endif
++#if SDL_VIDEO_DRIVER_VITA
++extern VideoBootStrap VITA_bootstrap;
++#endif
+ 
+ /* This is the current video device */
+ extern SDL_VideoDevice *current_video;
+diff --git a/src/video/SDL_video.c b/src/video/SDL_video.c
+index 46285c990..632875918 100644
+--- a/src/video/SDL_video.c
++++ b/src/video/SDL_video.c
+@@ -126,6 +126,9 @@ static VideoBootStrap *bootstrap[] = {
+ #if SDL_VIDEO_DRIVER_CACA
+ 	&CACA_bootstrap,
+ #endif
++#if SDL_VIDEO_DRIVER_VITA
++	&VITA_bootstrap,
++#endif
+ #if SDL_VIDEO_DRIVER_DUMMY
+ 	&DUMMY_bootstrap,
+ #endif
+diff --git a/src/video/vita/SDL_vitaevents.c b/src/video/vita/SDL_vitaevents.c
+new file mode 100644
+index 000000000..ab0900a3a
+--- /dev/null
++++ b/src/video/vita/SDL_vitaevents.c
+@@ -0,0 +1,48 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++/* Being a null driver, there's no event stream. We just define stubs for
++   most of the API. */
++
++#include "SDL.h"
++#include "../../events/SDL_sysevents.h"
++#include "../../events/SDL_events_c.h"
++
++#include "SDL_vitavideo.h"
++#include "SDL_vitaevents_c.h"
++#include "SDL_vitakeyboard_c.h"
++#include "SDL_vitamouse_c.h"
++
++void VITA_PumpEvents(_THIS)
++{
++    VITA_PollKeyboard();
++    VITA_PollMouse();
++}
++
++void VITA_InitOSKeymap(_THIS)
++{
++    /* do nothing. */
++}
++
++/* end of SDL_vitaevents.c ... */
++
+diff --git a/src/video/vita/SDL_vitaevents_c.h b/src/video/vita/SDL_vitaevents_c.h
+new file mode 100644
+index 000000000..fbe1dafb2
+--- /dev/null
++++ b/src/video/vita/SDL_vitaevents_c.h
+@@ -0,0 +1,33 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#include "SDL_vitavideo.h"
++
++/* Variables and functions exported by SDL_sysevents.c to other parts
++   of the native video subsystem (SDL_sysvideo.c)
++*/
++extern void VITA_InitOSKeymap(_THIS);
++extern void VITA_PumpEvents(_THIS);
++
++/* end of SDL_vitaevents_c.h ... */
++
+diff --git a/src/video/vita/SDL_vitakeyboard.c b/src/video/vita/SDL_vitakeyboard.c
+new file mode 100644
+index 000000000..58870ac40
+--- /dev/null
++++ b/src/video/vita/SDL_vitakeyboard.c
+@@ -0,0 +1,253 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#include <psp2/kernel/processmgr.h>
++#include <psp2/ctrl.h>
++#include <psp2/hid.h>
++
++#include "SDL_keyboard.h"
++#include "../../events/SDL_events_c.h"
++#include "../../events/SDL_sysevents.h"
++
++#include "SDL_vitavideo.h"
++#include "SDL_vitakeyboard_c.h"
++
++SceHidKeyboardReport k_reports[SCE_HID_MAX_REPORT];
++int keyboard_hid_handle = 0;
++Uint8 prev_keys[6] = {0};
++Uint8 prev_modifiers = 0;
++Uint8 locks = 0;
++
++const Uint8 numkeys = 0xE8;
++const int keymap[0xE8] = {
++    0, 0, 0, 0, SDLK_a, SDLK_b, SDLK_c, SDLK_d,
++    SDLK_e, SDLK_f, SDLK_g, SDLK_h, SDLK_i, SDLK_j, SDLK_k, SDLK_l,
++    SDLK_m, SDLK_n, SDLK_o, SDLK_p, SDLK_q, SDLK_r, SDLK_s, SDLK_t,
++    SDLK_u, SDLK_v, SDLK_w, SDLK_x, SDLK_y, SDLK_z, SDLK_1, SDLK_2,
++    SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9, SDLK_0,
++    SDLK_RETURN, SDLK_ESCAPE, SDLK_BACKSPACE, SDLK_TAB, SDLK_SPACE, SDLK_MINUS, SDLK_EQUALS, SDLK_LEFTBRACKET,
++    SDLK_RIGHTBRACKET, SDLK_BACKSLASH, SDLK_HASH, SDLK_SEMICOLON, SDLK_BACKQUOTE, SDLK_QUOTE, SDLK_COMMA, SDLK_PERIOD,
++    SDLK_SLASH, SDLK_CAPSLOCK, SDLK_F1, SDLK_F2, SDLK_F3, SDLK_F4, SDLK_F5, SDLK_F6,
++    SDLK_F7, SDLK_F8, SDLK_F9, SDLK_F10, SDLK_F11, SDLK_F12, SDLK_PRINT, SDLK_SCROLLOCK,
++    SDLK_BREAK, SDLK_INSERT, SDLK_HOME, SDLK_PAGEUP, SDLK_DELETE, SDLK_END, SDLK_PAGEDOWN, SDLK_RIGHT,
++    SDLK_LEFT, SDLK_DOWN, SDLK_UP, SDLK_NUMLOCK, SDLK_KP_DIVIDE, SDLK_KP_MULTIPLY, SDLK_KP_MINUS, SDLK_KP_PLUS,
++    SDLK_KP_ENTER, SDLK_KP1, SDLK_KP2, SDLK_KP3, SDLK_KP4, SDLK_KP5, SDLK_KP6, SDLK_KP7,
++    SDLK_KP8, SDLK_KP9, SDLK_KP0, SDLK_KP_PERIOD, SDLK_KP_EQUALS, SDLK_F13, SDLK_F14, SDLK_F15,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    0, 0, 0, 0, 0, 0, 0, 0,
++    SDLK_LCTRL, SDLK_LSHIFT, SDLK_LALT, SDLK_LMETA, SDLK_RCTRL, SDLK_RSHIFT, SDLK_RALT, SDLK_RMETA
++};
++
++const int SCANCODE_NUMLOCKCLEAR = 0x53;
++const int SCANCODE_CAPSLOCK = 0x39;
++const int SCANCODE_SCROLLLOCK = 0x47;
++const int SCANCODE_LCTRL = 0xE0;
++const int SCANCODE_LSHIFT = 0xE1;
++const int SCANCODE_LALT = 0xE2;
++const int SCANCODE_LGUI = 0xE3;
++const int SCANCODE_RCTRL = 0xE4;
++const int SCANCODE_RSHIFT = 0xE5;
++const int SCANCODE_RALT = 0xE6;
++const int SCANCODE_RGUI = 0xE7;
++
++SDL_keysym *VITA_TranslateKey(int scancode, SDL_keysym *keysym, SDL_bool pressed)
++{
++    int asciicode = 0;
++
++    int translated_keysym = SDLK_UNKNOWN;
++
++    if (scancode < numkeys)
++        translated_keysym = keymap[scancode];
++        
++    /* Set the keysym information */
++    keysym->scancode = scancode;
++    keysym->mod = KMOD_NONE;
++    keysym->sym = translated_keysym;
++    keysym->unicode = 0;
++
++    if (SDL_TranslateUNICODE && pressed && translated_keysym <= 127) {
++        keysym->unicode = translated_keysym;
++    }
++
++    return(keysym);
++}
++
++void 
++VITA_InitKeyboard(void)
++{
++    sceHidKeyboardEnumerate(&keyboard_hid_handle, 1);
++}
++
++void 
++VITA_PollKeyboard(void)
++{
++    SDL_keysym keysym;
++    if (keyboard_hid_handle > 0)
++    {
++        // Capslock and Numlock keys only change state on SDL_PRESSED
++
++        int numReports = sceHidKeyboardRead(keyboard_hid_handle, (SceHidKeyboardReport**)&k_reports, SCE_HID_MAX_REPORT);
++
++        if (numReports < 0) {
++            keyboard_hid_handle = 0;
++        }
++        else if (numReports) {
++
++            if (k_reports[numReports - 1].modifiers[1] & 0x1) {
++                if (!(locks & 0x1)) {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_NUMLOCKCLEAR, &keysym, 1));
++                    locks |= 0x1;
++                }
++            }
++            else {
++                if (locks & 0x1) {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_NUMLOCKCLEAR, &keysym, 0));
++                    locks &= ~0x1;
++                }
++            }
++
++            if (k_reports[numReports - 1].modifiers[1] & 0x2) {
++                if (!(locks & 0x2)) {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_CAPSLOCK, &keysym, 1));
++                    locks |= 0x2;
++                }
++            }
++            else {
++                if (locks & 0x2) {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_CAPSLOCK, &keysym, 0));
++                    locks &= ~0x2;
++                }
++            }
++
++            if (k_reports[numReports - 1].modifiers[1] & 0x4) {
++                if (!(locks & 0x4)) {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_SCROLLLOCK, &keysym, 1));
++                    locks |= 0x4;
++                }
++            }
++            else {
++                if (locks & 0x4) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_SCROLLLOCK, &keysym, 0));
++                    locks &= ~0x4;
++                }
++            }
++
++            Uint8 changed_modifiers = k_reports[numReports - 1].modifiers[0] ^ prev_modifiers;
++
++            if (changed_modifiers & 0x01) {
++                if (prev_modifiers & 0x01) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_LCTRL, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_LCTRL, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x02) {
++                if (prev_modifiers & 0x02) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_LSHIFT, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_LSHIFT, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x04) {
++                if (prev_modifiers & 0x04) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_LALT, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_LALT, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x08) {
++                if (prev_modifiers & 0x08) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_LGUI, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_LGUI, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x10) {
++                if (prev_modifiers & 0x10) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_RCTRL, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_RCTRL, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x20) {
++                if (prev_modifiers & 0x20) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_RSHIFT, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_RSHIFT, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x40) {
++                if (prev_modifiers & 0x40) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_RALT, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_RALT, &keysym, 1));
++                }
++            }
++            if (changed_modifiers & 0x80) {
++                if (prev_modifiers & 0x80) {
++                    SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(SCANCODE_RGUI, &keysym, 0));
++                }
++                else {
++                    SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(SCANCODE_RGUI, &keysym, 1));
++                }
++            }
++
++            prev_modifiers = k_reports[numReports - 1].modifiers[0];
++
++            for (int i = 0; i < 6; i++) {
++
++                int keyCode = k_reports[numReports - 1].keycodes[i];
++
++                if (keyCode != prev_keys[i]) {
++                    if (prev_keys[i]) {
++                        SDL_PrivateKeyboard(SDL_RELEASED, VITA_TranslateKey(prev_keys[i], &keysym, 0));
++                    }
++                    if (keyCode) {
++                        SDL_PrivateKeyboard(SDL_PRESSED, VITA_TranslateKey(keyCode, &keysym, 1));
++                    }
++                    prev_keys[i] = keyCode;
++                }
++            }
++        }
++    }
++}
+diff --git a/src/video/vita/SDL_vitakeyboard_c.h b/src/video/vita/SDL_vitakeyboard_c.h
+new file mode 100644
+index 000000000..9dec3e493
+--- /dev/null
++++ b/src/video/vita/SDL_vitakeyboard_c.h
+@@ -0,0 +1,32 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#ifndef _SDL_VITAKEYBOARD_H_
++#define _SDL_VITAKEYBOARD_H_
++
++/* Functions to be exported */
++extern void VITA_InitKeyboard();
++extern void VITA_PollKeyboard();
++extern SDL_keysym *VITA_TranslateKey(int scancode, SDL_keysym *keysym, SDL_bool pressed);
++
++#endif /* _SDL_VITAKEYBOARD_H_ */
+diff --git a/src/video/vita/SDL_vitamouse.c b/src/video/vita/SDL_vitamouse.c
+new file mode 100644
+index 000000000..1b2e572df
+--- /dev/null
++++ b/src/video/vita/SDL_vitamouse.c
+@@ -0,0 +1,86 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#include <psp2/kernel/processmgr.h>
++#include <psp2/ctrl.h>
++#include <psp2/hid.h>
++
++#include "SDL_mouse.h"
++#include "../../events/SDL_events_c.h"
++#include "../../events/SDL_sysevents.h"
++
++#include "SDL_vitavideo.h"
++#include "SDL_vitamouse_c.h"
++
++SceHidMouseReport m_reports[SCE_HID_MAX_REPORT];
++int mouse_hid_handle = 0;
++Uint8 prev_buttons = 0;
++
++void 
++VITA_InitMouse(void)
++{
++    sceHidMouseEnumerate(&mouse_hid_handle, 1);
++}
++
++void 
++VITA_PollMouse(void)
++{
++    if (mouse_hid_handle > 0)
++    {
++        int numReports = sceHidMouseRead(mouse_hid_handle, (SceHidMouseReport**)&m_reports, SCE_HID_MAX_REPORT);
++        if (numReports > 0)
++        {
++            for (int i = 0; i <= numReports - 1; i++)
++            {
++                Uint8 changed_buttons = m_reports[i].buttons ^ prev_buttons;
++
++                if (changed_buttons & 0x1) {
++                    if (prev_buttons & 0x1)
++                        SDL_PrivateMouseButton(SDL_RELEASED, SDL_BUTTON_LEFT, 0, 0);
++                    else
++                        SDL_PrivateMouseButton(SDL_PRESSED, SDL_BUTTON_LEFT, 0, 0);
++                }
++                if (changed_buttons & 0x2) {
++                    if (prev_buttons & 0x2)
++                        SDL_PrivateMouseButton(SDL_RELEASED, SDL_BUTTON_RIGHT, 0, 0);
++                    else
++                        SDL_PrivateMouseButton(SDL_PRESSED, SDL_BUTTON_RIGHT, 0, 0);
++                }
++                if (changed_buttons & 0x4) {
++                    if (prev_buttons & 0x4)
++                        SDL_PrivateMouseButton(SDL_RELEASED, SDL_BUTTON_MIDDLE, 0, 0);
++                    else
++                        SDL_PrivateMouseButton(SDL_PRESSED, SDL_BUTTON_MIDDLE, 0, 0);
++                }
++
++                prev_buttons = m_reports[i].buttons;
++
++                if (m_reports[i].rel_x || m_reports[i].rel_y) 
++                {
++                    SDL_PrivateMouseMotion(0, 1, m_reports[i].rel_x, m_reports[i].rel_y);
++                }
++            }
++        }
++    }
++}
++
+diff --git a/src/video/vita/SDL_vitamouse_c.h b/src/video/vita/SDL_vitamouse_c.h
+new file mode 100644
+index 000000000..843a33e11
+--- /dev/null
++++ b/src/video/vita/SDL_vitamouse_c.h
+@@ -0,0 +1,33 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#ifndef _SDL_VITAMOUSE_H_
++#define _SDL_VITAMOUSE_H_
++
++#include "SDL_vitavideo.h"
++
++/* Functions to be exported */
++extern void VITA_InitMouse();
++extern void VITA_PollMouse();
++
++#endif /* _SDL_VITAMOUSE_H_ */
+\ No newline at end of file
+diff --git a/src/video/vita/SDL_vitavideo.c b/src/video/vita/SDL_vitavideo.c
+new file mode 100644
+index 000000000..e50fc4feb
+--- /dev/null
++++ b/src/video/vita/SDL_vitavideo.c
+@@ -0,0 +1,304 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#include "SDL_video.h"
++#include "SDL_mouse.h"
++#include "../SDL_sysvideo.h"
++#include "../SDL_pixels_c.h"
++#include "../../events/SDL_events_c.h"
++
++#include "SDL_vitavideo.h"
++#include "SDL_vitaevents_c.h"
++#include "SDL_vitamouse_c.h"
++#include "SDL_vitakeyboard_c.h"
++
++#define VITAVID_DRIVER_NAME "vita"
++
++#define SCREEN_W 960
++#define SCREEN_H 544
++#define ALIGN(x, a)     (((x) + ((a) - 1)) & ~((a) - 1))
++#define DISPLAY_PIXEL_FORMAT SCE_DISPLAY_PIXELFORMAT_A8B8G8R8
++
++static int vsync = 0;
++
++void *vita_gpu_alloc(SceKernelMemBlockType type, unsigned int size, SceUID *uid);
++void vita_gpu_free(SceUID uid);
++
++/* Initialization/Query functions */
++static int VITA_VideoInit(_THIS, SDL_PixelFormat *vformat);
++static SDL_Rect **VITA_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags);
++static SDL_Surface *VITA_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags);
++static int VITA_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors);
++static void VITA_VideoQuit(_THIS);
++
++/* Hardware surface functions */
++static int VITA_FlipHWSurface(_THIS, SDL_Surface *surface);
++static int VITA_AllocHWSurface(_THIS, SDL_Surface *surface);
++static int VITA_LockHWSurface(_THIS, SDL_Surface *surface);
++static void VITA_UnlockHWSurface(_THIS, SDL_Surface *surface);
++static void VITA_FreeHWSurface(_THIS, SDL_Surface *surface);
++
++/* etc. */
++static void VITA_UpdateRects(_THIS, int numrects, SDL_Rect *rects);
++
++void *vita_gpu_alloc(SceKernelMemBlockType type, unsigned int size, SceUID *uid)
++{
++    void *mem;
++
++    if (type == SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW) {
++        size = ALIGN(size, 256*1024);
++    } else {
++        size = ALIGN(size, 4*1024);
++    }
++
++    *uid = sceKernelAllocMemBlock("gpu_mem", type, size, NULL);
++
++    if (*uid < 0)
++        return NULL;
++
++    if (sceKernelGetMemBlockBase(*uid, &mem) < 0)
++        return NULL;
++
++    return mem;
++}
++
++void gpu_free(SceUID uid)
++{
++    void *mem = NULL;
++    if (sceKernelGetMemBlockBase(uid, &mem) < 0)
++        return;
++    sceKernelFreeMemBlock(uid);
++}
++
++/* VITA driver bootstrap functions */
++static int VITA_Available(void)
++{
++    return 1;
++}
++
++static void VITA_DeleteDevice(SDL_VideoDevice *device)
++{
++    SDL_free(device->hidden);
++    SDL_free(device);
++}
++
++static SDL_VideoDevice *VITA_CreateDevice(int devindex)
++{
++    SDL_VideoDevice *device;
++
++    /* Initialize all variables that we clean on shutdown */
++    device = (SDL_VideoDevice *)SDL_malloc(sizeof(SDL_VideoDevice));
++    if ( device ) {
++        SDL_memset(device, 0, (sizeof *device));
++        device->hidden = (struct SDL_PrivateVideoData *)
++                SDL_malloc((sizeof *device->hidden));
++        SDL_memset(device->hidden, 0, (sizeof *device->hidden));
++    }
++    if ( (device == NULL) || (device->hidden == NULL) ) {
++        SDL_OutOfMemory();
++        if ( device ) {
++            SDL_free(device);
++        }
++        return(0);
++    }
++    SDL_memset(device->hidden, 0, (sizeof *device->hidden));
++
++    /* Set the function pointers */
++    device->VideoInit = VITA_VideoInit;
++    device->ListModes = VITA_ListModes;
++    device->SetVideoMode = VITA_SetVideoMode;
++    device->CreateYUVOverlay = NULL;
++    device->SetColors = VITA_SetColors;
++    device->UpdateRects = VITA_UpdateRects;
++    device->VideoQuit = VITA_VideoQuit;
++    device->AllocHWSurface = VITA_AllocHWSurface;
++    device->CheckHWBlit = NULL;
++    device->FillHWRect = NULL;
++    device->SetHWColorKey = NULL;
++    device->SetHWAlpha = NULL;
++    device->LockHWSurface = VITA_LockHWSurface;
++    device->UnlockHWSurface = VITA_UnlockHWSurface;
++    device->FlipHWSurface = VITA_FlipHWSurface;
++    device->FreeHWSurface = VITA_FreeHWSurface;
++    device->SetCaption = NULL;
++    device->SetIcon = NULL;
++    device->IconifyWindow = NULL;
++    device->GrabInput = NULL;
++    device->GetWMInfo = NULL;
++    device->InitOSKeymap = VITA_InitOSKeymap;
++    device->PumpEvents = VITA_PumpEvents;
++
++    device->free = VITA_DeleteDevice;
++
++    return device;
++}
++
++int VITA_VideoInit(_THIS, SDL_PixelFormat *vformat)
++{
++    vformat->BitsPerPixel = 32;
++    vformat->BytesPerPixel = 4;
++    vformat->Rmask = 0x000000FF;
++    vformat->Gmask = 0x0000FF00;
++    vformat->Bmask = 0x00FF0000;
++    vformat->Amask = 0xFF000000;
++
++    VITA_InitKeyboard();
++    VITA_InitMouse();
++
++    return(0);
++}
++
++SDL_Surface *VITA_SetVideoMode(_THIS, SDL_Surface *current,
++                int width, int height, int bpp, Uint32 flags)
++{
++    SceDisplayFrameBuf param;
++    param.size = sizeof(SceDisplayFrameBuf);
++    sceDisplayGetFrameBuf(&param, SCE_DISPLAY_SETBUF_IMMEDIATE);
++
++    for (int i = 0; i < DISPLAY_BUFFER_COUNT; i++) {
++        this->hidden->buffer[i] = vita_gpu_alloc(
++            SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW,
++            4 * SCREEN_W * SCREEN_H,
++            &this->hidden->buffer_uid[i]
++        );
++
++        // memset the buffer to black
++        for (int y = 0; y < SCREEN_H; y++) {
++            unsigned int *row = (unsigned int *)this->hidden->buffer[i] + y*SCREEN_W;
++            for (int x = 0; x < SCREEN_W; x++) {
++                row[x] = 0xff0000FF;
++            }
++        }
++    }
++    this->hidden->buffer_index = 0;
++
++    SceDisplayFrameBuf framebuf;
++    SDL_memset(&framebuf, 0x00, sizeof(SceDisplayFrameBuf));
++    framebuf.size        = sizeof(SceDisplayFrameBuf);
++    framebuf.base        = this->hidden->buffer[this->hidden->buffer_index];
++    framebuf.pitch       = SCREEN_W;
++    framebuf.pixelformat = DISPLAY_PIXEL_FORMAT;
++    framebuf.width       = SCREEN_W;
++    framebuf.height      = SCREEN_H;
++    int err = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_SETBUF_NEXTFRAME);
++
++    current->flags = (SDL_FULLSCREEN | SDL_HWSURFACE);
++
++    current->w = SCREEN_W;
++    current->h = SCREEN_H;
++    current->pitch = SCREEN_W * 4;
++
++    if ( ! SDL_ReallocFormat(current, 32, 0x000000FF, 0x0000ff00, 0x00ff0000, 0xff000000) ) {
++        return(NULL);
++    }
++    current->pixels = this->hidden->buffer[0];
++
++    if ((flags & SDL_DOUBLEBUF) == SDL_DOUBLEBUF) {
++        current->flags |= SDL_DOUBLEBUF;
++        // draw on backbuffer
++        int buffer_index = (this->hidden->buffer_index + 1) % DISPLAY_BUFFER_COUNT;
++        current->pixels = this->hidden->buffer[buffer_index];
++    }
++
++    return(current);
++}
++
++SDL_Rect **VITA_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
++{
++    static SDL_Rect VITA_Rects[] = {
++        {0, 0, 960, 544},
++    };
++    static SDL_Rect *VITA_modes[] = {
++        &VITA_Rects[0],
++        NULL
++    };
++    SDL_Rect **modes = VITA_modes;
++
++    switch(format->BitsPerPixel)
++    {
++        case 16:
++        case 24:
++        case 32:
++        return modes;
++
++        default:
++        return (SDL_Rect **) -1;
++    }
++}
++
++static int VITA_AllocHWSurface(_THIS, SDL_Surface *surface)
++{
++    return(-1);
++}
++
++static void VITA_FreeHWSurface(_THIS, SDL_Surface *surface)
++{
++}
++
++static int VITA_FlipHWSurface(_THIS, SDL_Surface *surface)
++{
++    if ((surface->flags & SDL_DOUBLEBUF) == SDL_DOUBLEBUF) {
++        SceDisplayFrameBuf framebuf;
++        SDL_memset(&framebuf, 0x00, sizeof(SceDisplayFrameBuf));
++        framebuf.size        = sizeof(SceDisplayFrameBuf);
++        framebuf.base        = this->hidden->buffer[this->hidden->buffer_index];
++        framebuf.pitch       = SCREEN_W;
++        framebuf.pixelformat = DISPLAY_PIXEL_FORMAT;
++        framebuf.width       = SCREEN_W;
++        framebuf.height      = SCREEN_H;
++        int err = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_SETBUF_NEXTFRAME);
++
++        this->hidden->buffer_index = (this->hidden->buffer_index + 1) % DISPLAY_BUFFER_COUNT;
++        surface->pixels = this->hidden->buffer[this->hidden->buffer_index];
++    }
++}
++
++static int VITA_LockHWSurface(_THIS, SDL_Surface *surface)
++{
++    return(0);
++}
++
++static void VITA_UnlockHWSurface(_THIS, SDL_Surface *surface)
++{
++    return;
++}
++
++static void VITA_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
++{
++    /* do nothing? */
++}
++
++int VITA_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors)
++{
++    return(1);
++}
++
++void VITA_VideoQuit(_THIS)
++{
++}
++
++VideoBootStrap VITA_bootstrap = {
++    VITAVID_DRIVER_NAME, "SDL vita video driver",
++    VITA_Available, VITA_CreateDevice
++};
++
+diff --git a/src/video/vita/SDL_vitavideo.h b/src/video/vita/SDL_vitavideo.h
+new file mode 100644
+index 000000000..87a495849
+--- /dev/null
++++ b/src/video/vita/SDL_vitavideo.h
+@@ -0,0 +1,45 @@
++/*
++    SDL - Simple DirectMedia Layer
++    Copyright (C) 1997-2012 Sam Lantinga
++
++    This library is free software; you can redistribute it and/or
++    modify it under the terms of the GNU Lesser General Public
++    License as published by the Free Software Foundation; either
++    version 2.1 of the License, or (at your option) any later version.
++
++    This library is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++    Lesser General Public License for more details.
++
++    You should have received a copy of the GNU Lesser General Public
++    License along with this library; if not, write to the Free Software
++    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++
++    Sam Lantinga
++    slouken@libsdl.org
++*/
++#include "SDL_config.h"
++
++#ifndef _SDL_vitavideo_h
++#define _SDL_vitavideo_h
++
++#include "../SDL_sysvideo.h"
++#include <psp2/types.h>
++#include <psp2/display.h>
++#include <psp2/kernel/sysmem.h>
++
++/* Hidden "this" pointer for the video functions */
++#define _THIS   SDL_VideoDevice *this
++
++#define DISPLAY_BUFFER_COUNT 2
++
++/* Private display data */
++
++struct SDL_PrivateVideoData {
++    uint8_t buffer_index;
++    SceUID buffer_uid[DISPLAY_BUFFER_COUNT];
++    void* buffer[DISPLAY_BUFFER_COUNT];
++};
++
++#endif /* _SDL_vitavideo_h */
