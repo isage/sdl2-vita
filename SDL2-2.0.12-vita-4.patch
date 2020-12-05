@@ -7208,10 +7208,10 @@ index 394c68b56..ae50bd2f4 100644
  
 diff --git a/src/sensor/vita/SDL_vitasensor.c b/src/sensor/vita/SDL_vitasensor.c
 new file mode 100644
-index 000000000..5e74397af
+index 000000000..e54d279aa
 --- /dev/null
 +++ b/src/sensor/vita/SDL_vitasensor.c
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,216 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
@@ -7258,9 +7258,10 @@ index 000000000..5e74397af
 +{
 +    sceMotionReset();
 +    sceMotionStartSampling();
-+//    sceMotionMagnetometerOn();
++    // not sure if these are needed, we are reading unfiltered state
 +    sceMotionSetAngleThreshold(0);
-+    sceMotionSetGyroBiasCorrection(SCE_FALSE);
++    sceMotionSetDeadband(SCE_FALSE);
++    sceMotionSetTiltCorrection(SCE_FALSE);
 +
 +    SDL_sensors_count = 2;
 +
@@ -7429,7 +7430,7 @@ index 000000000..5e74397af
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/sensor/vita/SDL_vitasensor.h b/src/sensor/vita/SDL_vitasensor.h
 new file mode 100644
-index 000000000..0c16044e1
+index 000000000..b10384231
 --- /dev/null
 +++ b/src/sensor/vita/SDL_vitasensor.h
 @@ -0,0 +1,30 @@
@@ -7459,7 +7460,7 @@ index 000000000..0c16044e1
 +struct sensor_hwdata
 +{
 +    float data[3];
-+    int counter;
++    Uint32 counter;
 +};
 +
 +/* vi: set ts=4 sw=4 expandtab: */
