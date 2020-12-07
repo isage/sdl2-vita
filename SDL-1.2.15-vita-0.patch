@@ -537,6 +537,24 @@ index 000000000..f4aa5e726
 +};
 +
 +#endif /* _SDL_vitaaudio_h */
+diff --git a/src/file/SDL_rwops.c b/src/file/SDL_rwops.c
+index 1593e9772..8baf97ee1 100644
+--- a/src/file/SDL_rwops.c
++++ b/src/file/SDL_rwops.c
+@@ -515,6 +515,13 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
+ 	}
+ #else
+ 	fp = fopen(file, mode);
++#if defined(__VITA__)
++	if (fp == NULL) {
++		char path[4096];
++		SDL_snprintf(path, 4096, "app0:/%s", file);
++		fp = fopen(file, mode);
++	}
++#endif
+ #endif
+ 	if ( fp == NULL ) {
+ 		SDL_SetError("Couldn't open %s", file);
 diff --git a/src/joystick/vita/SDL_sysjoystick.c b/src/joystick/vita/SDL_sysjoystick.c
 new file mode 100644
 index 000000000..4244b816d
