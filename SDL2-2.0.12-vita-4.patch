@@ -9010,10 +9010,10 @@ index 000000000..ea8648c17
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/video/vita/SDL_vitatouch.c b/src/video/vita/SDL_vitatouch.c
 new file mode 100644
-index 000000000..47770dbfd
+index 000000000..5913db5b0
 --- /dev/null
 +++ b/src/video/vita/SDL_vitatouch.c
-@@ -0,0 +1,187 @@
+@@ -0,0 +1,171 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2017 Sam Lantinga <slouken@libsdl.org>
@@ -9052,7 +9052,6 @@ index 000000000..47770dbfd
 +SceTouchData touch[SCE_TOUCH_PORT_MAX_NUM];
 +
 +SDL_FRect area_info[SCE_TOUCH_PORT_MAX_NUM];
-+SDL_FRect display_info[SCE_TOUCH_PORT_MAX_NUM];
 +
 +struct{
 +    float min;
@@ -9075,11 +9074,6 @@ index 000000000..47770dbfd
 +		area_info[port].y  = (float)panelinfo.minAaY;
 +		area_info[port].w  = (float)(panelinfo.maxAaX - panelinfo.minAaX);
 +		area_info[port].h  = (float)(panelinfo.maxAaY - panelinfo.minAaY);
-+
-+		display_info[port].x = (float)panelinfo.minDispX;
-+		display_info[port].y = (float)panelinfo.minDispY;
-+		display_info[port].w = (float)(panelinfo.maxDispX - panelinfo.minDispX);
-+		display_info[port].h = (float)(panelinfo.maxDispY - panelinfo.minDispY);
 +
 +		force_info[port].min = (float)panelinfo.minForce;
 +		force_info[port].range = (float)(panelinfo.maxForce - panelinfo.minForce);
@@ -9174,18 +9168,8 @@ index 000000000..47770dbfd
 +}
 +
 +void VITA_ConvertTouchXYToSDLXY(float *sdl_x, float *sdl_y, int vita_x, int vita_y, int port) {
-+	float x = 0.f;
-+	float y = 0.f;
-+	SDL_FRect rect;
-+
-+	if (port == SCE_TOUCH_PORT_FRONT) {
-+		rect = display_info[port];
-+	} else {
-+		rect = area_info[port];
-+	}
-+
-+	x = (vita_x - rect.x) / rect.w;
-+	y = (vita_y - rect.y) / rect.h;
++	float x = (vita_x - area_info[port].x) / area_info[port].w;
++	float y = (vita_y - area_info[port].y) / area_info[port].h;
 +
 +	x = SDL_max(x, 0.0);
 +	x = SDL_min(x, 1.0);
