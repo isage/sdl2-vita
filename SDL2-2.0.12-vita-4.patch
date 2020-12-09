@@ -4058,7 +4058,7 @@ index 000000000..dd7091591
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/render/vitagxm/SDL_render_vita_gxm.c b/src/render/vitagxm/SDL_render_vita_gxm.c
 new file mode 100644
-index 000000000..c8024d4ea
+index 000000000..c06585df5
 --- /dev/null
 +++ b/src/render/vitagxm/SDL_render_vita_gxm.c
 @@ -0,0 +1,1124 @@
@@ -4170,7 +4170,7 @@ index 000000000..c8024d4ea
 +    .CreateRenderer = VITA_GXM_CreateRenderer,
 +    .info = {
 +        .name = "VITA gxm",
-+        .flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC,
++        .flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE,
 +        .num_texture_formats = 1,
 +        .texture_formats = {
 +            [0] = SDL_PIXELFORMAT_ABGR8888, // TODO: support more formats? ARGB8888 should be enough?
@@ -8223,7 +8223,7 @@ index 000000000..80bf49d17
 +typedef SceUID SYS_ThreadHandle;
 diff --git a/src/timer/vita/SDL_systimer.c b/src/timer/vita/SDL_systimer.c
 new file mode 100644
-index 000000000..adc7b852a
+index 000000000..91902d9fc
 --- /dev/null
 +++ b/src/timer/vita/SDL_systimer.c
 @@ -0,0 +1,91 @@
@@ -8297,13 +8297,13 @@ index 000000000..adc7b852a
 +Uint64
 +SDL_GetPerformanceCounter(void)
 +{
-+    return SDL_GetTicks();
++    return sceKernelGetProcessTimeWide();
 +}
 +
 +Uint64
 +SDL_GetPerformanceFrequency(void)
 +{
-+    return 1000;
++    return 1000000;
 +}
 +
 +void SDL_Delay(Uint32 ms)
