@@ -1,9 +1,9 @@
 diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
 new file mode 100644
-index 000000000..44c3cc338
+index 000000000..6237546af
 --- /dev/null
 +++ b/Makefile.vita.dolce
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,60 @@
 +# Based on port by xerpi
 +# Makefile to build the SDL library
 +
@@ -40,8 +40,9 @@ index 000000000..44c3cc338
 +	src/video/*.c \
 +	src/video/vita/*.c \
 +	src/video/yuv2rgb/*.c \
++	src/video/arm/*.S \
 +
-+OBJS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
++OBJS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g' | sed -e 's,\.S,\.o,g')
 +
 +PREFIX  = arm-dolce-eabi
 +CC      = $(PREFIX)-gcc
@@ -78,10 +79,10 @@ index 3937dbc38..66ca07312 100644
  #include "SDL_config_minimal.h"
 diff --git a/include/SDL_config_vita.h b/include/SDL_config_vita.h
 new file mode 100644
-index 000000000..3d3184fdf
+index 000000000..dee71f5dc
 --- /dev/null
 +++ b/include/SDL_config_vita.h
-@@ -0,0 +1,160 @@
+@@ -0,0 +1,163 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
@@ -213,6 +214,9 @@ index 000000000..3d3184fdf
 +/* VITA isn't that sophisticated */
 +#define LACKS_SYS_MMAN_H 1
 +
++/* enable optimized blitters */
++#define SDL_ARM_SIMD_BLITTERS 1
++#define SDL_ARM_NEON_BLITTERS 1
 +
 +#define SDL_AUDIO_DRIVER_VITA  1
 +#define SDL_THREAD_VITA    1
