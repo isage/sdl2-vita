@@ -1304,10 +1304,10 @@ index 000000000..94cfb8749
 +SDL_PROC(void, glBufferSubData, (GLenum, GLintptr, GLsizeiptr, const GLvoid *))
 diff --git a/src/render/vitagles2/SDL_render_gles2vita.c b/src/render/vitagles2/SDL_render_gles2vita.c
 new file mode 100644
-index 000000000..f74db3abb
+index 000000000..97a23ce16
 --- /dev/null
 +++ b/src/render/vitagles2/SDL_render_gles2vita.c
-@@ -0,0 +1,2103 @@
+@@ -0,0 +1,2107 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
@@ -2512,12 +2512,16 @@ index 000000000..f74db3abb
 +    }
 +
 +    /* upload the new VBO data for this set of commands. */
-+    data->glBindBuffer(GL_ARRAY_BUFFER, vbo);
-+    if (data->vertex_buffer_size[vboidx] < vertsize) {
-+        data->glBufferData(GL_ARRAY_BUFFER, vertsize, vertices, GL_DYNAMIC_DRAW);
-+        data->vertex_buffer_size[vboidx] = vertsize;
-+    } else {
-+        data->glBufferSubData(GL_ARRAY_BUFFER, 0, vertsize, vertices);
++    /* NULL/zero vertices could happen SetRenderTarget is the first render command */
++    if (vertsize > 0 && vertices != NULL)
++    {
++        data->glBindBuffer(GL_ARRAY_BUFFER, vbo);
++        if (data->vertex_buffer_size[vboidx] < vertsize) {
++            data->glBufferData(GL_ARRAY_BUFFER, vertsize, vertices, GL_DYNAMIC_DRAW);
++            data->vertex_buffer_size[vboidx] = vertsize;
++        } else {
++            data->glBufferSubData(GL_ARRAY_BUFFER, 0, vertsize, vertices);
++        }
 +    }
 +
 +    /* cycle through a few VBOs so the GL has some time with the data before we replace it. */
