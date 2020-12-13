@@ -4066,10 +4066,10 @@ index 000000000..dd7091591
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/render/vitagxm/SDL_render_vita_gxm.c b/src/render/vitagxm/SDL_render_vita_gxm.c
 new file mode 100644
-index 000000000..c06585df5
+index 000000000..4ffe51d36
 --- /dev/null
 +++ b/src/render/vitagxm/SDL_render_vita_gxm.c
-@@ -0,0 +1,1124 @@
+@@ -0,0 +1,1145 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2020 Sam Lantinga <slouken@libsdl.org>
@@ -4107,6 +4107,8 @@ index 000000000..c06585df5
 +#include "SDL_render_vita_gxm_types.h"
 +#include "SDL_render_vita_gxm_tools.h"
 +#include "SDL_render_vita_gxm_memory.h"
++
++#include <psp2/common_dialog.h>
 +
 +static SDL_Renderer *VITA_GXM_CreateRenderer(SDL_Window *window, Uint32 flags);
 +
@@ -5121,6 +5123,25 @@ index 000000000..c06585df5
 +//    sceGxmFinish(data->gxm_context);
 +
 +    data->displayData.address = data->displayBufferData[data->backBufferIndex];
++
++
++    SceCommonDialogUpdateParam updateParam;
++
++    SDL_memset(&updateParam, 0, sizeof(updateParam));
++
++    updateParam.renderTarget.colorFormat    = VITA_GXM_COLOR_FORMAT;
++    updateParam.renderTarget.surfaceType    = SCE_GXM_COLOR_SURFACE_LINEAR;
++    updateParam.renderTarget.width          = VITA_GXM_SCREEN_WIDTH;
++    updateParam.renderTarget.height         = VITA_GXM_SCREEN_HEIGHT;
++    updateParam.renderTarget.strideInPixels = VITA_GXM_SCREEN_STRIDE;
++
++    updateParam.renderTarget.colorSurfaceData = data->displayBufferData[data->backBufferIndex];
++    updateParam.renderTarget.depthSurfaceData = data->depthBufferData;
++
++    updateParam.displaySyncObject = (SceGxmSyncObject *)data->displayBufferSync[data->backBufferIndex];
++
++    sceCommonDialogUpdate(&updateParam);
++
 +
 +    sceGxmDisplayQueueAddEntry(
 +        data->displayBufferSync[data->frontBufferIndex],    // OLD fb
@@ -9236,10 +9257,10 @@ index 000000000..1de0dea08
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/video/vita/SDL_vitavideo.c b/src/video/vita/SDL_vitavideo.c
 new file mode 100644
-index 000000000..5a22093fc
+index 000000000..e639305fc
 --- /dev/null
 +++ b/src/video/vita/SDL_vitavideo.c
-@@ -0,0 +1,340 @@
+@@ -0,0 +1,437 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
@@ -9281,6 +9302,8 @@ index 000000000..5a22093fc
 +#include "SDL_vitamouse_c.h"
 +#include "SDL_vitagl_c.h"
 +
++#include <psp2/ime_dialog.h>
++
 +SDL_Window *Vita_Window;
 +
 +static int
@@ -9294,9 +9317,11 @@ index 000000000..5a22093fc
 +{
 +/*    SDL_VideoData *phdata = (SDL_VideoData *) device->driverdata; */
 +
-+    if (device->driverdata != NULL) {
-+        device->driverdata = NULL;
-+    }
++    SDL_free(device->driverdata);
++    SDL_free(device);
++//    if (device->driverdata != NULL) {
++//        device->driverdata = NULL;
++//    }
 +}
 +
 +static SDL_VideoDevice *
@@ -9330,6 +9355,7 @@ index 000000000..5a22093fc
 +    }
 +    device->gl_data = gldata;
 +    phdata->egl_initialized = SDL_TRUE;
++    phdata->ime_active = SDL_FALSE;
 +
 +    device->driverdata = phdata;
 +
@@ -9553,28 +9579,120 @@ index 000000000..5a22093fc
 +    return SDL_FALSE;
 +}
 +
-+
-+/* TO Write Me */
 +SDL_bool VITA_HasScreenKeyboardSupport(_THIS)
 +{
-+    return SDL_FALSE;
++    return SDL_TRUE;
 +}
++
 +void VITA_ShowScreenKeyboard(_THIS, SDL_Window *window)
 +{
++    SDL_VideoData *videodata = (SDL_VideoData *)_this->driverdata;
++
++    wchar_t *title = L"";
++    wchar_t *text = L"";
++
++    SceImeDialogParam param;
++    sceImeDialogParamInit(&param);
++
++    param.supportedLanguages = SCE_IME_LANGUAGE_ENGLISH_US;
++    param.languagesForced = SCE_FALSE;
++    param.type = SCE_IME_TYPE_DEFAULT;
++    param.option = 0;
++    param.textBoxMode = SCE_IME_DIALOG_TEXTBOX_MODE_WITH_CLEAR;
++    param.maxTextLength = SCE_IME_DIALOG_MAX_TEXT_LENGTH;
++
++    param.title = title;
++    param.initialText = text;
++    param.inputTextBuffer = videodata->ime_buffer;
++
++    SceInt32 res = sceImeDialogInit(&param);
++    if (res < 0) {
++        SDL_SetError("Failed to init IME dialog");
++        return;
++    }
++
++    videodata->ime_active = SDL_TRUE;
 +}
++
 +void VITA_HideScreenKeyboard(_THIS, SDL_Window *window)
 +{
++    SDL_VideoData *videodata = (SDL_VideoData *)_this->driverdata;
++
++    SceCommonDialogStatus dialogStatus = sceImeDialogGetStatus();
++
++    switch (dialogStatus) {
++        default:
++        case SCE_COMMON_DIALOG_STATUS_NONE:
++        case SCE_COMMON_DIALOG_STATUS_RUNNING:
++                break;
++        case SCE_COMMON_DIALOG_STATUS_FINISHED:
++                sceImeDialogTerm();
++                break;
++    }
++
++    videodata->ime_active = SDL_FALSE;
 +}
++
 +SDL_bool VITA_IsScreenKeyboardShown(_THIS, SDL_Window *window)
 +{
-+    return SDL_FALSE;
++    SceCommonDialogStatus dialogStatus = sceImeDialogGetStatus();
++    return (dialogStatus == SCE_COMMON_DIALOG_STATUS_RUNNING);
++}
++
++
++static void utf16_to_utf8(const uint16_t *src, uint8_t *dst) {
++  int i;
++  for (i = 0; src[i]; i++) {
++    if ((src[i] & 0xFF80) == 0) {
++      *(dst++) = src[i] & 0xFF;
++    } else if((src[i] & 0xF800) == 0) {
++      *(dst++) = ((src[i] >> 6) & 0xFF) | 0xC0;
++      *(dst++) = (src[i] & 0x3F) | 0x80;
++    } else if((src[i] & 0xFC00) == 0xD800 && (src[i + 1] & 0xFC00) == 0xDC00) {
++      *(dst++) = (((src[i] + 64) >> 8) & 0x3) | 0xF0;
++      *(dst++) = (((src[i] >> 2) + 16) & 0x3F) | 0x80;
++      *(dst++) = ((src[i] >> 4) & 0x30) | 0x80 | ((src[i + 1] << 2) & 0xF);
++      *(dst++) = (src[i + 1] & 0x3F) | 0x80;
++      i += 1;
++    } else {
++      *(dst++) = ((src[i] >> 12) & 0xF) | 0xE0;
++      *(dst++) = ((src[i] >> 6) & 0x3F) | 0x80;
++      *(dst++) = (src[i] & 0x3F) | 0x80;
++    }
++  }
++
++  *dst = '\0';
 +}
 +
 +void VITA_PumpEvents(_THIS)
 +{
++    SDL_VideoData *videodata = (SDL_VideoData *)_this->driverdata;
++
 +    VITA_PollTouch();
 +    VITA_PollKeyboard();
 +    VITA_PollMouse();
++
++    if (videodata->ime_active == SDL_TRUE) {
++        // update IME status. Terminate, if finished
++        SceCommonDialogStatus dialogStatus = sceImeDialogGetStatus();
++         if (dialogStatus == SCE_COMMON_DIALOG_STATUS_FINISHED) {
++
++            SceImeDialogResult result;
++            SDL_memset(&result, 0, sizeof(SceImeDialogResult));
++            sceImeDialogGetResult(&result);
++
++            // Convert UTF16 to UTF8
++            uint8_t utf8_buffer[SCE_IME_DIALOG_MAX_TEXT_LENGTH];
++            utf16_to_utf8(videodata->ime_buffer, utf8_buffer);
++            // send sdl event
++            SDL_SendKeyboardText((const char*)utf8_buffer);
++
++            sceImeDialogTerm();
++
++            videodata->ime_active = SDL_FALSE;
++        }
++
++    }
 +}
 +
 +#endif /* SDL_VIDEO_DRIVER_VITA */
@@ -9582,10 +9700,10 @@ index 000000000..5a22093fc
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/video/vita/SDL_vitavideo.h b/src/video/vita/SDL_vitavideo.h
 new file mode 100644
-index 000000000..1902ec6d1
+index 000000000..8f02e9680
 --- /dev/null
 +++ b/src/video/vita/SDL_vitavideo.h
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,106 @@
 +/*
 +  Simple DirectMedia Layer
 +  Copyright (C) 1997-2015 Sam Lantinga <slouken@libsdl.org>
@@ -9613,11 +9731,15 @@ index 000000000..1902ec6d1
 +#include "../../SDL_internal.h"
 +#include "../SDL_sysvideo.h"
 +
++#include <psp2/ime_dialog.h>
++
 +typedef struct SDL_VideoData
 +{
 +	SDL_bool egl_initialized;   /* OpenGL device initialization status */
 +	uint32_t egl_refcount;      /* OpenGL reference count              */
 +
++	wchar_t ime_buffer[SCE_IME_DIALOG_MAX_TEXT_LENGTH];
++	SDL_bool ime_active;
 +} SDL_VideoData;
 +
 +
