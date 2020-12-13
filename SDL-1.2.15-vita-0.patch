@@ -1,6 +1,6 @@
 diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
 new file mode 100644
-index 000000000..a4cb35021
+index 000000000..01aed0cbe
 --- /dev/null
 +++ b/Makefile.vita.dolce
 @@ -0,0 +1,48 @@
@@ -48,9 +48,9 @@ index 000000000..a4cb35021
 +	rm -f $(TARGET) $(OBJECTS)
 +
 +install: $(TARGET)
-+	@cp  $(TARGET) $(DOLCESDK)/arm-dolce-eabi/lib
-+	@mkdir -p "$(DOLCESDK)/arm-dolce-eabi/include/SDL"
-+	@cp include/*.h "$(DOLCESDK)/arm-dolce-eabi/include/SDL"
++	@cp  $(TARGET) $(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/lib
++	@mkdir -p "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/include/SDL"
++	@cp include/*.h "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/include/SDL"
 +	@echo "Installed!"
 diff --git a/include/SDL_config.h.default b/include/SDL_config.h.default
 index 09ba38a71..7515a3d90 100644
