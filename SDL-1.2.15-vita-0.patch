@@ -1,9 +1,9 @@
 diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
 new file mode 100644
-index 000000000..01aed0cbe
+index 000000000..4eab23d5e
 --- /dev/null
 +++ b/Makefile.vita.dolce
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,51 @@
 +# Makefile to build the SDL library
 +
 +INCLUDE = -I./include
@@ -46,12 +46,16 @@ index 000000000..01aed0cbe
 +
 +clean:
 +	rm -f $(TARGET) $(OBJECTS)
++	rm $(CONFIG_H)
 +
 +install: $(TARGET)
 +	@cp  $(TARGET) $(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/lib
 +	@mkdir -p "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/include/SDL"
 +	@cp include/*.h "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/include/SDL"
 +	@echo "Installed!"
++
++.PHONY: clean install $(CONFIG_H)
+\ No newline at end of file
 diff --git a/include/SDL_config.h.default b/include/SDL_config.h.default
 index 09ba38a71..7515a3d90 100644
 --- a/include/SDL_config.h.default
