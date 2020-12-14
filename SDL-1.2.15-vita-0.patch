@@ -1,9 +1,9 @@
 diff --git a/Makefile.vita.dolce b/Makefile.vita.dolce
 new file mode 100644
-index 000000000..4eab23d5e
+index 000000000..9a07169ab
 --- /dev/null
 +++ b/Makefile.vita.dolce
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,52 @@
 +# Makefile to build the SDL library
 +
 +INCLUDE = -I./include
@@ -49,6 +49,7 @@ index 000000000..4eab23d5e
 +	rm $(CONFIG_H)
 +
 +install: $(TARGET)
++	@mkdir -p "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/lib"
 +	@cp  $(TARGET) $(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/lib
 +	@mkdir -p "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/include/SDL"
 +	@cp include/*.h "$(DESTDIR)$(DOLCESDK)/arm-dolce-eabi/include/SDL"
