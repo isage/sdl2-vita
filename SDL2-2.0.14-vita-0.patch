@@ -630,6 +630,20 @@ index 000000000..7e0e9587d
 +#define SDL_LOADSO_DISABLED    1
 +
 +#endif /* _SDL_config_vita_h */
+diff --git a/include/SDL_platform.h b/include/SDL_platform.h
+index 716655792..7e4d5478c 100644
+--- a/include/SDL_platform.h
++++ b/include/SDL_platform.h
+@@ -175,6 +175,9 @@
+ #define __SDL_NOGETPROCADDR__
+ #endif
+ 
++#if defined(__vita__)
++#define __VITA__ 1
++#endif
+ 
+ #include "begin_code.h"
+ /* Set up for C function definitions, even when using C++ */
 diff --git a/include/SDL_stdinc.h b/include/SDL_stdinc.h
 index 91ccaa451..fa1d4cae9 100644
 --- a/include/SDL_stdinc.h
