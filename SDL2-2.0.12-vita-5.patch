@@ -467,7 +467,7 @@ index d6ea31eac..ca93edc3d 100644
  #cmakedefine SDL_ASSEMBLY_ROUTINES @SDL_ASSEMBLY_ROUTINES@
 diff --git a/include/SDL_config_vita.h b/include/SDL_config_vita.h
 new file mode 100644
-index 000000000..2b9d62484
+index 000000000..7e0e9587d
 --- /dev/null
 +++ b/include/SDL_config_vita.h
 @@ -0,0 +1,158 @@
@@ -609,7 +609,7 @@ index 000000000..2b9d62484
 +#define SDL_AUDIO_DRIVER_VITA  1
 +#define SDL_THREAD_VITA    1
 +#define SDL_JOYSTICK_VITA   1
-+#define SDL_TIMERS_VITA 1
++#define SDL_TIMER_VITA 1
 +#define SDL_POWER_VITA 1
 +#define SDL_VIDEO_DRIVER_VITA  1
 +#define SDL_FILESYSTEM_VITA   1
