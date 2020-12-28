@@ -2226,10 +2226,10 @@ index 000000000..843a33e11
 \ No newline at end of file
 diff --git a/src/video/vita/SDL_vitavideo.c b/src/video/vita/SDL_vitavideo.c
 new file mode 100644
-index 000000000..e50fc4feb
+index 000000000..0bca59239
 --- /dev/null
 +++ b/src/video/vita/SDL_vitavideo.c
-@@ -0,0 +1,304 @@
+@@ -0,0 +1,307 @@
 +/*
 +    SDL - Simple DirectMedia Layer
 +    Copyright (C) 1997-2012 Sam Lantinga
@@ -2314,7 +2314,7 @@ index 000000000..e50fc4feb
 +    return mem;
 +}
 +
-+void gpu_free(SceUID uid)
++void vita_gpu_free(SceUID uid)
 +{
 +    void *mem = NULL;
 +    if (sceKernelGetMemBlockBase(uid, &mem) < 0)
@@ -2527,6 +2527,9 @@ index 000000000..e50fc4feb
 +
 +void VITA_VideoQuit(_THIS)
 +{
++    for (int i = 0; i < DISPLAY_BUFFER_COUNT; i++) {
++        vita_gpu_free(this->hidden->buffer_uid[i]);
++    }
 +}
 +
 +VideoBootStrap VITA_bootstrap = {
