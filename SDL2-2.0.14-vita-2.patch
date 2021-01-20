@@ -8156,7 +8156,7 @@ index 000000000..ad2391d02
 +/* vi: set ts=4 sw=4 expandtab: */
 diff --git a/src/thread/vita/SDL_sysmutex.c b/src/thread/vita/SDL_sysmutex.c
 new file mode 100644
-index 000000000..f91853776
+index 000000000..eae0da879
 --- /dev/null
 +++ b/src/thread/vita/SDL_sysmutex.c
 @@ -0,0 +1,147 @@
@@ -8206,7 +8206,7 @@ index 000000000..f91853776
 +    if (mutex) {
 +
 +        mutex->uid =  sceKernelCreateMutex("SDL mutex",
-+            SCE_KERNEL_MUTEX_ATTR_TH_PRIO |  SCE_KERNEL_MUTEX_ATTR_RECURSIVE,
++            SCE_KERNEL_MUTEX_ATTR_RECURSIVE,
 +            0,
 +            NULL
 +        );
