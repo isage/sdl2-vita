@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b9b9eb620..12c271ee3 100644
+index b9b9eb620..c7f1aa65c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -164,7 +164,7 @@ if(APPLE OR ARCH_64)
@@ -177,26 +177,17 @@ index b9b9eb620..12c271ee3 100644
  endif()
  
  if(VIDEO_VULKAN)
-@@ -2087,7 +2230,17 @@ if(NOT CMAKE_HOST_WIN32)
+@@ -2087,7 +2230,9 @@ if(NOT CMAKE_HOST_WIN32)
      WORKING_DIRECTORY ${SDL2_BINARY_DIR})
  endif()
  if(NOT WINDOWS OR CYGWIN)
--  set(prefix ${CMAKE_INSTALL_PREFIX})
 +
-+  if(VITA)
-+    if(DOLCESDK)
-+      set(prefix "\${DOLCESDK}/arm-dolce-eabi")
-+    else()
-+      set(prefix "\${VITASDK}/arm-vita-eabi")
-+    endif()
-+  else()
-+    set(prefix ${CMAKE_INSTALL_PREFIX})
-+  endif()
+   set(prefix ${CMAKE_INSTALL_PREFIX})
 +
    set(exec_prefix "\${prefix}")
    set(libdir "\${exec_prefix}/lib${LIB_SUFFIX}")
    set(bindir "\${exec_prefix}/bin")
-@@ -2111,13 +2264,23 @@ Libs.private:")
+@@ -2111,13 +2256,23 @@ Libs.private:")
    endif()
  
    # Clean up the different lists
